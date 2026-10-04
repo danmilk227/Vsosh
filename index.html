@@ -308,12 +308,6 @@
             <!-- Rendered by JS -->
           </div>
 
-          <!-- Add Grade Button -->
-          <button onclick="openAddGradeModal()" class="fixed bottom-20 right-6 md:absolute md:bottom-20 md:right-6 w-14 h-14 rounded-full bg-[#1e88e5] text-white shadow-xl flex items-center justify-center hover:bg-blue-600 active:scale-95 transition-all z-20">
-            <svg class="w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2.2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-            </svg>
-          </button>
         </section>
 
 
@@ -504,16 +498,16 @@
         <div class="text-xs text-gray-400 font-medium" id="sheet-date-caption">получена 24 сентября</div>
         
         <div class="flex items-center space-x-1.5 mt-1 cursor-pointer">
-          <h2 id="sheet-subject-title" class="text-2xl font-bold text-white">История</h2>
-          <span class="text-gray-400 text-xl font-light">›</span>
+          <h2 id="sheet-subject-title" class="text-3xl font-bold text-white">История</h2>
+          <span class="text-gray-400 text-2xl font-light">›</span>
         </div>
         
-        <p id="sheet-work-subtitle" class="text-sm text-gray-300 mt-0.5">Ответ на уроке 24 сентября</p>
+        <p id="sheet-work-subtitle" class="text-base text-gray-100 mt-1">Ответ на уроке 24 сентября</p>
 
         <!-- Grade Square + Cat Vector Art Area -->
-        <div class="mt-6 flex items-center justify-between">
+        <div class="mt-6 flex items-center justify-between pr-4">
           <!-- Big Grade Square Box -->
-          <div id="sheet-grade-box" class="w-28 h-28 rounded-2xl border-2 border-white/20 bg-[#1b1b22] flex items-center justify-center text-5xl font-extrabold text-white shadow-inner">
+          <div id="sheet-grade-box" class="w-32 h-32 rounded-[2rem] border border-[#1e88e5] bg-transparent flex items-center justify-center text-6xl font-extrabold text-white">
             5
           </div>
 
@@ -524,41 +518,33 @@
         </div>
 
         <!-- Optional Class Stats Link (for grades <= 3) -->
-        <div id="sheet-class-stats-row" class="mt-5 hidden">
-          <button onclick="showToast('Статистика оценок по классу: средний балл 3.8')" class="text-sm text-blue-400 hover:text-blue-300 font-medium">
+        <div id="sheet-class-stats-row" class="mt-8 hidden">
+          <button onclick="showToast('Статистика оценок по классу: средний балл 3.8')" class="text-base text-[#1e88e5] font-medium">
             Статистика по классу
           </button>
         </div>
 
         <!-- Details block -->
-        <div class="mt-5 pt-4 border-t border-[#23232a]">
-          <div class="text-xs text-gray-400">Вид и название работы</div>
-          <div id="sheet-work-type" class="text-sm text-white font-medium mt-0.5">Зачет</div>
-          <div id="sheet-comment-container" class="mt-2 text-xs text-gray-400 hidden">
+        <div class="mt-8">
+          <div class="text-sm text-gray-400 mb-1">Вид и название работы</div>
+          <div id="sheet-work-type" class="text-base text-white font-medium">Зачет</div>
+          <div id="sheet-comment-container" class="mt-2 text-sm text-gray-400 hidden">
             <span>Комментарий: </span><span id="sheet-comment-text" class="text-gray-200"></span>
           </div>
         </div>
 
-        <!-- Sheet Footer: Share button, Edit/Delete, and Big Blue Close Button (X) -->
-        <div class="mt-8 pt-2 flex items-center justify-between">
-          <div class="flex items-center space-x-3">
-            <button onclick="shareCurrentGrade()" class="flex items-center space-x-2 text-blue-400 hover:text-blue-300 text-sm font-medium">
-              <svg class="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/>
-              </svg>
-              <span>Поделиться</span>
-            </button>
-            <button onclick="editGradeFromSheet()" class="text-xs px-2.5 py-1 rounded-lg bg-gray-800 text-gray-300 hover:text-white">
-              Изменить
-            </button>
-            <button onclick="deleteGradeFromSheet()" class="text-xs px-2.5 py-1 rounded-lg bg-red-950/60 text-red-300 hover:text-red-200">
-              Удалить
-            </button>
-          </div>
+        <!-- Sheet Footer: Share button and Big Blue Close Button (X) -->
+        <div class="mt-12 flex items-center justify-between">
+          <button onclick="shareCurrentGrade()" class="flex items-center space-x-2 text-[#1e88e5] text-base font-medium">
+            <svg class="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/>
+            </svg>
+            <span>Поделиться</span>
+          </button>
 
           <!-- Round Blue Close Button (X) from screenshot -->
-          <button onclick="closeGradeDetailModal()" class="w-12 h-12 rounded-full bg-[#1e88e5] text-white flex items-center justify-center hover:bg-blue-600 active:scale-95 transition-all shadow-lg">
-            <svg class="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2.5">
+          <button onclick="closeGradeDetailModal()" class="w-16 h-16 rounded-full bg-[#1e88e5] text-white flex items-center justify-center shadow-lg -mr-6 -mb-6">
+            <svg class="w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
@@ -1490,7 +1476,7 @@
 
       document.getElementById("sheet-date-caption").innerText = `получена ${grade.date}`;
       document.getElementById("sheet-subject-title").innerText = grade.subject;
-      document.getElementById("sheet-work-subtitle").innerText = `${grade.type} ${grade.date}`;
+      document.getElementById("sheet-work-subtitle").innerText = `${grade.workName || grade.type}`;
       document.getElementById("sheet-grade-box").innerText = grade.grade;
       document.getElementById("sheet-work-type").innerText = grade.workName || grade.type || "Зачет";
 
@@ -1542,20 +1528,6 @@
       showToast(`Оценка скопирована: ${grade.subject} — ${grade.grade}!`);
     }
 
-    function deleteGradeFromSheet() {
-      if (!currentSelectedGradeId) return;
-      appDb.grades = appDb.grades.filter(g => g.id !== currentSelectedGradeId);
-      saveDatabase();
-      closeGradeDetailModal();
-      showToast("Оценка успешно удалена");
-    }
-
-    function editGradeFromSheet() {
-      const grade = appDb.grades.find(g => g.id === currentSelectedGradeId);
-      if (!grade) return;
-      closeGradeDetailModal();
-      openEditGradeModal(grade.id);
-    }
   </script>
 
   <script>
