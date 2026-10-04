@@ -64,52 +64,31 @@
       transform: scale(0.94);
     }
   </style>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("sw.js");
+        });
+      }
+    </script>
 </head>
-<body class="bg-[#0b0c10] text-[#f3f4f6] font-sans min-h-screen flex items-center justify-center p-0 md:p-4 overflow-x-hidden">
+<body class="bg-[#0b0c10] text-[#f3f4f6] font-sans min-h-screen overflow-x-hidden">
 
   <!-- Outer Wrapper with Device Frame Toggle -->
-  <div id="device-wrapper" class="relative w-full max-w-[430px] h-[100dvh] md:h-[890px] bg-black md:rounded-[44px] md:shadow-[0_25px_70px_rgba(0,0,0,0.85)] md:border-[10px] md:border-[#202026] overflow-hidden flex flex-col transition-all duration-300">
+  <div id="device-wrapper" class="relative w-full h-[100dvh] bg-black overflow-hidden flex flex-col">
+
     
-    <!-- Top Hardware Notch / Dynamic Island on desktop -->
-    <div class="hidden md:flex absolute top-2 left-1/2 -translate-x-1/2 w-28 h-5 bg-[#18181b] rounded-full z-50 pointer-events-none items-center justify-center">
-      <div class="w-3 h-3 rounded-full bg-black/60 mr-3"></div>
-      <div class="w-2.5 h-2.5 rounded-full bg-[#09090b]"></div>
-    </div>
 
-    <!-- Controls Floating Pill (Desktop View Toggle & Audio) -->
-    <div class="absolute -top-12 md:-top-11 right-0 hidden md:flex items-center gap-2 z-50">
-      <button onclick="toggleDeviceView()" class="px-3 py-1 text-xs font-medium rounded-full bg-[#1e1e24] text-gray-300 hover:text-white border border-gray-700 hover:border-gray-500 transition-colors shadow">
-        📱 Режим экрана
-      </button>
-      <button onclick="toggleSound()" id="sound-btn" class="px-3 py-1 text-xs font-medium rounded-full bg-[#1e1e24] text-gray-300 hover:text-white border border-gray-700 hover:border-gray-500 transition-colors shadow">
-        🔊 Звук: Вкл
-      </button>
-    </div>
 
-    <!-- Mobile Status Bar (From Video: 12:43, 4G, 65%) -->
-    <div class="w-full pt-3 pb-1 px-6 flex justify-between items-center text-xs text-white z-40 select-none bg-black/95">
-      <span id="status-clock" class="font-semibold tracking-wide">12:43</span>
-      <div class="flex items-center space-x-2 text-[11px]">
-        <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse" title="Запись экрана"></div>
-        <span class="font-bold text-[10px]">00:04</span>
-        <span class="text-gray-400">•</span>
-        <span class="font-medium">4G</span>
-        <!-- Cellular Signal Icon -->
-        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-          <path d="M2 20h20L12 4 2 20z"/>
-        </svg>
-        <!-- Battery Icon 65% -->
-        <div class="flex items-center space-x-0.5">
-          <span class="text-[10px] font-medium text-gray-300">65</span>
-          <div class="w-4 h-2.5 border border-white rounded-[3px] p-[1px] flex items-center">
-            <div class="h-full bg-white rounded-[1px] w-[65%]"></div>
-          </div>
-        </div>
+
+
       </div>
     </div>
 
     <!-- SCREEN 1: PIN LOCK SCREEN (Frames 00:03 - 00:08) -->
-    <div id="screen-lock" class="absolute inset-0 top-7 bg-black z-30 flex flex-col justify-between items-center py-6 px-8 transition-opacity duration-300">
+    <div id="screen-lock" class="absolute inset-0 bg-black z-30 flex flex-col justify-between items-center py-6 px-8 transition-opacity duration-300">
       
       <!-- Top User Info -->
       <div class="flex flex-col items-center mt-6">
@@ -130,10 +109,7 @@
           <div class="pin-dot w-3 h-3 rounded-full bg-[#27272a] transition-all duration-150"></div>
         </div>
 
-        <!-- Quick Demo Hint -->
-        <button onclick="quickBypassPin()" class="mt-4 text-xs text-blue-400 hover:text-blue-300 underline underline-offset-4">
-          Быстрый вход (Код: 0000)
-        </button>
+
       </div>
 
       <!-- Numeric Keypad -->
@@ -260,12 +236,7 @@
             <!-- Injected by JS -->
           </div>
 
-          <!-- Floating Action Button (+) -->
-          <button onclick="openAddLessonModal()" class="fixed bottom-20 right-6 md:absolute md:bottom-20 md:right-6 w-14 h-14 rounded-full bg-[#1e88e5] text-white shadow-xl flex items-center justify-center hover:bg-blue-600 active:scale-95 transition-all z-20">
-            <svg class="w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2.2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-            </svg>
-          </button>
+
         </section>
 
         <!-- TAB 3: ЗАДАНИЯ (Homework) -->
@@ -353,6 +324,49 @@
           </button>
         </section>
 
+
+        <!-- TAB 6: ADMIN (Hidden Tab for Editing Grades) -->
+        <section id="tab-admin" class="tab-pane hidden pb-24">
+          <div class="px-5 pt-3 pb-2 flex items-center justify-between">
+            <h1 class="text-lg font-bold text-white tracking-wide">Админка</h1>
+          </div>
+          <div class="p-4">
+            <p class="text-sm text-gray-400 mb-4">Здесь вы можете редактировать оценки</p>
+            <div class="flex flex-col h-full w-full">
+
+        <div class="flex items-center justify-between pb-3 border-b border-[#23232c]">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">🗄️</span>
+            <h3 class="text-base font-bold text-white">Управление базой данных</h3>
+          </div>
+
+        </div>
+
+        <!-- Manager Tabs -->
+        <div class="flex border-b border-[#23232c] mt-3">
+          <button onclick="switchDbTab('schedule')" id="dbtab-schedule" class="flex-1 py-2 text-xs font-semibold text-blue-400 border-b-2 border-blue-500">Расписание</button>
+          <button onclick="switchDbTab('grades')" id="dbtab-grades" class="flex-1 py-2 text-xs font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200">Оценки</button>
+          <button onclick="switchDbTab('tasks')" id="dbtab-tasks" class="flex-1 py-2 text-xs font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200">Задания</button>
+          <button onclick="switchDbTab('io')" id="dbtab-io" class="flex-1 py-2 text-xs font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200">JSON</button>
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-1 overflow-y-auto no-scrollbar py-3" id="db-content-area">
+          <!-- Injected dynamically -->
+        </div>
+
+        <!-- DB Modal Footer Actions -->
+        <div class="pt-3 border-t border-[#23232c] flex items-center justify-between">
+          <button onclick="resetDbToDefaults()" class="text-xs text-red-400 hover:text-red-300 font-medium">
+            ↺ Сброс к видео
+          </button>
+
+        </div>
+
+      </div>
+          </div>
+        </section>
+
         <!-- TAB 5: ДАНИИЛ (Profile) -->
         <section id="tab-profile" class="tab-pane hidden pb-24">
           <!-- Profile Card -->
@@ -363,26 +377,14 @@
                 <path d="M12 2C9.243 2 7 4.243 7 7c0 2.21 1.442 4.085 3.447 4.733C6.31 12.35 3.5 15.86 3.5 20c0 .55.45 1 1 1h15c.55 0 1-.45 1-1 0-4.14-2.81-7.65-6.947-8.267C15.558 11.085 17 9.21 17 7c0-2.757-2.243-5-5-5zm0 2c1.654 0 3 1.346 3 3s-1.346 3-3 3-3-1.346-3-3 1.346-3 3-3zm0 9c3.314 0 6.223 2.146 7.158 5H4.842C5.777 15.146 8.686 13 12 13z"/>
               </svg>
             </div>
-            <h2 id="profile-name" class="mt-3 text-xl font-bold tracking-wide uppercase text-white">ДАНИИЛ</h2>
+            <h2 id="profile-name" onclick="handleProfileTap()" class="mt-3 text-xl font-bold tracking-wide uppercase text-white cursor-default select-none">ДАНИИЛ</h2>
             <p id="profile-class" class="text-sm text-gray-400">11 «А» класс</p>
           </div>
 
           <!-- Menu items from video screenshot -->
           <div class="px-4 space-y-2.5 mt-2">
             
-            <!-- Database Manager (Highlighted Special Item) -->
-            <button onclick="openDatabaseManagerModal()" class="w-full p-4 rounded-2xl bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-purple-900/40 border border-blue-500/40 hover:border-blue-400 flex items-center justify-between text-left transition-all">
-              <div class="flex items-center space-x-3.5">
-                <div class="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
-                  💾
-                </div>
-                <div>
-                  <div class="text-sm font-semibold text-white">Управление базой данных</div>
-                  <div class="text-xs text-blue-300">Редактор расписания, оценок, экспорт и импорт JSON</div>
-                </div>
-              </div>
-              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-blue-500/30 text-blue-200">CRUD</span>
-            </button>
+
 
             <!-- Standard App Menu List -->
             <button onclick="showToast('Настройки дневника')" class="w-full p-4 rounded-2xl bg-[#151518] border border-[#232328] hover:bg-[#1a1a1f] flex items-center justify-between text-left transition-all">
@@ -574,43 +576,6 @@
     </div>
 
     <!-- MODAL: DATABASE MANAGER (Full CRUD for Schedule, Grades, Homework) -->
-    <div id="db-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex-col items-center justify-center p-3">
-      <div class="relative w-full max-w-[420px] bg-[#121216] border border-[#272733] rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-        
-        <div class="flex items-center justify-between pb-3 border-b border-[#23232c]">
-          <div class="flex items-center space-x-2">
-            <span class="text-xl">🗄️</span>
-            <h3 class="text-base font-bold text-white">Управление базой данных</h3>
-          </div>
-          <button onclick="closeDatabaseManagerModal()" class="w-8 h-8 rounded-full bg-gray-800 text-gray-300 hover:text-white flex items-center justify-center">✕</button>
-        </div>
-
-        <!-- Manager Tabs -->
-        <div class="flex border-b border-[#23232c] mt-3">
-          <button onclick="switchDbTab('schedule')" id="dbtab-schedule" class="flex-1 py-2 text-xs font-semibold text-blue-400 border-b-2 border-blue-500">Расписание</button>
-          <button onclick="switchDbTab('grades')" id="dbtab-grades" class="flex-1 py-2 text-xs font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200">Оценки</button>
-          <button onclick="switchDbTab('tasks')" id="dbtab-tasks" class="flex-1 py-2 text-xs font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200">Задания</button>
-          <button onclick="switchDbTab('io')" id="dbtab-io" class="flex-1 py-2 text-xs font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200">JSON</button>
-        </div>
-
-        <!-- Content Area -->
-        <div class="flex-1 overflow-y-auto no-scrollbar py-3" id="db-content-area">
-          <!-- Injected dynamically -->
-        </div>
-
-        <!-- DB Modal Footer Actions -->
-        <div class="pt-3 border-t border-[#23232c] flex items-center justify-between">
-          <button onclick="resetDbToDefaults()" class="text-xs text-red-400 hover:text-red-300 font-medium">
-            ↺ Сброс к видео
-          </button>
-          <button onclick="closeDatabaseManagerModal()" class="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white">
-            Готово
-          </button>
-        </div>
-
-      </div>
-    </div>
-
     <!-- MODAL: ADD / EDIT LESSON -->
     <div id="lesson-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
       <div class="w-full max-w-[380px] bg-[#141418] border border-[#2a2a35] rounded-3xl p-5 shadow-2xl">
@@ -924,51 +889,57 @@
         name: "ДАНИИЛ",
         class: "11 «А» класс",
         region: "Челябинская область",
-        pin: "0000"
+        pin: "2270"
       },
       schedule: {
         "ВС": [],
         "ПН": [
-          { id: "s1", subject: "Математика", time: "08:00—08:35", room: "" },
-          { id: "s2", subject: "Литература", time: "08:45—09:25", room: "307" },
-          { id: "s3", subject: "Литература", time: "09:40—10:20", room: "307" },
-          { id: "s4", subject: "Физика", time: "10:40—11:20", room: "215" },
-          { id: "s5", subject: "Физика", time: "11:35—12:15", room: "215" },
-          { id: "s6", subject: "География", time: "12:35—13:15", room: "106" },
-          { id: "s7", subject: "География", time: "13:35—14:15", room: "106" }
+          { id: "s1", subject: "Литература", time: "08:45—09:25", room: "307" },
+          { id: "s2", subject: "Литература", time: "09:40—10:20", room: "307" },
+          { id: "s3", subject: "Физика", time: "10:40—11:20", room: "215" },
+          { id: "s4", subject: "Физика", time: "11:35—12:15", room: "216" },
+          { id: "s5", subject: "География", time: "12:35—13:15", room: "106" },
+          { id: "s6", subject: "Геометрия", time: "13:35—14:15", room: "310" },
+          { id: "s7", subject: "Вер стат", time: "14:25—15:05", room: "310" }
         ],
         "ВТ": [
-          { id: "s8", subject: "Математика", time: "08:00—08:35", room: "" },
-          { id: "s9", subject: "Математика", time: "08:00—08:35", room: "" },
-          { id: "s10", subject: "Англ. яз.", time: "09:40—10:20", room: "313а" },
-          { id: "s11", subject: "Англ. яз.", time: "10:40—11:20", room: "313а" },
-          { id: "s12", subject: "Алгебра и НА", time: "11:35—12:15", room: "310" },
-          { id: "s13", subject: "Алгебра и НА", time: "12:35—13:15", room: "310" }
+          { id: "s8", subject: "Россия — мои горизонты", time: "08:00—08:35", room: "311" },
+          { id: "s9", subject: "Английский язык", time: "08:45—09:25", room: "312" },
+          { id: "s10", subject: "Английский язык", time: "09:40—10:20", room: "313" },
+          { id: "s11", subject: "Английский язык", time: "10:40—11:20", room: "314" },
+          { id: "s12", subject: "Алгебра", time: "11:35—12:15", room: "310" },
+          { id: "s13", subject: "Алгебра", time: "12:35—13:15", room: "310" },
+          { id: "s14", subject: "Русский язык", time: "13:35—14:15", room: "311" },
+          { id: "s15", subject: "Химия", time: "14:25—15:05", room: "316" }
         ],
         "СР": [
-          { id: "s14", subject: "Математика", time: "08:00—08:35", room: "" },
-          { id: "s15", subject: "Математика", time: "08:00—08:35", room: "" },
-          { id: "s16", subject: "Геометрия", time: "08:45—09:25", room: "310" },
-          { id: "s17", subject: "Геометрия", time: "09:40—10:20", room: "310" },
-          { id: "s18", subject: "Информатика", time: "10:40—11:20", room: "208", hasHw: true },
-          { id: "s19", subject: "Информатика", time: "11:35—12:15", room: "" },
-          { id: "s20", subject: "ОБЗР", time: "13:35—14:15", room: "" }
+          { id: "s16", subject: "Егэ инф.", time: "08:00—08:35", room: "208" },
+          { id: "s17", subject: "Геометрия", time: "08:45—09:25", room: "310" },
+          { id: "s18", subject: "Геометрия", time: "09:40—10:20", room: "310" },
+          { id: "s19", subject: "Информатика", time: "10:40—11:20", room: "208" },
+          { id: "s20", subject: "Информатика", time: "11:35—12:15", room: "208" },
+          { id: "s21", subject: "КОиРОВ", time: "12:35—13:15", room: "216" },
+          { id: "s22", subject: "ОБЗР", time: "13:35—14:15", room: "308" },
+          { id: "s23", subject: "Егэ мат.", time: "14:25—15:05", room: "310" },
+          { id: "s24", subject: "Биология", time: "15:10—15:50", room: "305" }
         ],
         "ЧТ": [
-          { id: "s21", subject: "Математика", time: "08:00—08:35", room: "" },
-          { id: "s22", subject: "Математика", time: "08:00—08:35", room: "" },
-          { id: "s23", subject: "Информатика", time: "09:40—10:20", room: "208", hasHw: true },
-          { id: "s24", subject: "Информатика", time: "10:40—11:20", room: "208" },
-          { id: "s25", subject: "Алгебра и НА", time: "11:35—12:15", room: "310" },
-          { id: "s26", subject: "Алгебра и НА", time: "12:35—13:15", room: "310" },
-          { id: "s27", subject: "Обществознание", time: "13:35—14:15", room: "" }
+          { id: "s25", subject: "Егэ инф.", time: "08:45—09:25", room: "208" },
+          { id: "s26", subject: "Информатика", time: "09:40—10:20", room: "208" },
+          { id: "s27", subject: "Информатика", time: "10:40—11:20", room: "208" },
+          { id: "s28", subject: "Алгебра", time: "11:35—12:15", room: "310" },
+          { id: "s29", subject: "Алгебра", time: "12:35—13:15", room: "310" },
+          { id: "s30", subject: "Обществознание", time: "13:35—14:15", room: "115" },
+          { id: "s31", subject: "Обществознание", time: "14:25—15:05", room: "115" }
         ],
         "ПТ": [
-          { id: "s28", subject: "Русский язык", time: "08:00—08:35", room: "305" },
-          { id: "s29", subject: "Русский язык", time: "08:45—09:25", room: "305" },
-          { id: "s30", subject: "История", time: "09:40—10:20", room: "212" },
-          { id: "s31", subject: "Химия", time: "10:40—11:20", room: "114" },
-          { id: "s32", subject: "Биология", time: "11:35—12:15", room: "118" }
+          { id: "s32", subject: "История", time: "08:00—08:35", room: "216" },
+          { id: "s33", subject: "История", time: "08:45—09:25", room: "216" },
+          { id: "s34", subject: "Русский язык", time: "09:40—10:20", room: "302" },
+          { id: "s35", subject: "Русский язык", time: "10:40—11:20", room: "302" },
+          { id: "s36", subject: "Физкультура", time: "11:35—12:15", room: "Зал 2" },
+          { id: "s37", subject: "Физкультура", time: "12:35—13:15", room: "Зал 2" },
+          { id: "s38", subject: "Литература", time: "13:35—14:15", room: "308" }
         ],
         "СБ": []
       },
@@ -1069,15 +1040,7 @@
       showToast(soundEnabled ? "Звуки включены" : "Звуки выключены");
     }
 
-    function toggleDeviceView() {
-      const wrapper = document.getElementById("device-wrapper");
-      wrapper.classList.toggle("max-w-[430px]");
-      wrapper.classList.toggle("md:h-[890px]");
-      wrapper.classList.toggle("md:rounded-[44px]");
-      wrapper.classList.toggle("md:border-[10px]");
-      showToast("Режим отображения переключен");
-    }
-  </script>
+
 
   <script>
     function handleKeypad(key) {
@@ -1110,8 +1073,8 @@
     }
 
     function verifyPin() {
-      const validPin = appDb.profile.pin || "0000";
-      if (enteredPin === validPin || enteredPin === "0000") {
+      const validPin = appDb.profile.pin || "2270";
+      if (enteredPin === validPin || enteredPin === "2270") {
         playAudioTone(900, 0.1);
         unlockApp();
       } else {
@@ -1134,10 +1097,7 @@
       updatePinDots();
     }
 
-    function quickBypassPin() {
-      playAudioTone(800, 0.08);
-      unlockApp();
-    }
+
 
     function unlockApp() {
       const lockScreen = document.getElementById("screen-lock");
@@ -1177,12 +1137,14 @@
 
       navButtons.forEach(item => {
         const b = document.getElementById(item.btn);
-        if (item.id === tabId) {
-          b.classList.remove("text-gray-500");
-          b.classList.add("text-appGold");
-        } else {
-          b.classList.remove("text-appGold");
-          b.classList.add("text-gray-500");
+        if(b) {
+          if (item.id === tabId) {
+            b.classList.remove("text-gray-500");
+            b.classList.add("text-appGold");
+          } else {
+            b.classList.remove("text-appGold");
+            b.classList.add("text-gray-500");
+          }
         }
       });
 
@@ -1355,8 +1317,8 @@
       // Render Lesson Cards (Frames 00:20 - 00:24)
       lessons.forEach(lesson => {
         const card = document.createElement("div");
-        card.className = "p-3.5 rounded-2xl bg-[#151518] border border-[#232328] hover:bg-[#1a1a20] transition-colors flex items-center justify-between cursor-pointer group";
-        card.onclick = () => openEditLessonModal(selectedScheduleDay, lesson.id);
+        card.className = "p-3.5 rounded-2xl bg-[#151518] border border-[#232328] hover:bg-[#1a1a20] transition-colors flex items-center justify-between ";
+        card.style.cursor = "default";
 
         card.innerHTML = `
           <div class="flex-1 min-w-0 pr-3">
@@ -1641,7 +1603,7 @@
         container.innerHTML = `
           <div class="flex items-center justify-between mb-3">
             <span class="text-xs text-gray-300 font-semibold">Список уроков по дням</span>
-            <button onclick="openAddLessonModal()" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-medium">+ Добавить</button>
+
           </div>
         `;
         const listWrap = document.createElement("div");
@@ -2056,7 +2018,7 @@
     function openEditProfileModal() {
       document.getElementById("edit-input-name").value = appDb.profile.name;
       document.getElementById("edit-input-class").value = appDb.profile.class;
-      document.getElementById("edit-input-pin").value = appDb.profile.pin || "0000";
+      document.getElementById("edit-input-pin").value = appDb.profile.pin || "2270";
       document.getElementById("edit-profile-modal").classList.remove("hidden");
       document.getElementById("edit-profile-modal").classList.add("flex");
     }
@@ -2069,7 +2031,7 @@
     function saveProfileChanges() {
       const name = document.getElementById("edit-input-name").value.trim() || "ДАНИИЛ";
       const userClass = document.getElementById("edit-input-class").value.trim() || "11 «А» класс";
-      const pin = document.getElementById("edit-input-pin").value.trim() || "0000";
+      const pin = document.getElementById("edit-input-pin").value.trim() || "2270";
 
       appDb.profile.name = name;
       appDb.profile.class = userClass;
@@ -2168,6 +2130,25 @@
       updateLiveClock();
       setInterval(updateLiveClock, 30000);
     };
+  </script>
+
+
+  <script>
+    let profileTapCount = 0;
+    let profileTapTimeout;
+    function handleProfileTap() {
+      profileTapCount++;
+      clearTimeout(profileTapTimeout);
+      profileTapTimeout = setTimeout(() => {
+        profileTapCount = 0;
+      }, 1500);
+
+      if (profileTapCount >= 10) {
+        profileTapCount = 0;
+        showToast("Режим редактирования открыт");
+        switchTab('admin');
+      }
+    }
   </script>
 
 </body>
