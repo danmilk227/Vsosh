@@ -79,14 +79,6 @@
   <!-- Outer Wrapper with Device Frame Toggle -->
   <div id="device-wrapper" class="relative w-full h-[100dvh] bg-black overflow-hidden flex flex-col">
 
-    
-
-
-
-
-      </div>
-    </div>
-
     <!-- SCREEN 1: PIN LOCK SCREEN (Frames 00:03 - 00:08) -->
     <div id="screen-lock" class="absolute inset-0 bg-black z-30 flex flex-col justify-between items-center py-6 px-8 transition-opacity duration-300">
       
@@ -1042,6 +1034,7 @@
 
 
 
+  </script>
   <script>
     function handleKeypad(key) {
       playAudioTone(key === 'back' ? 400 : 750, 0.04);
@@ -2120,7 +2113,7 @@
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById("status-clock").innerText = `${hours}:${minutes}`;
+      if (document.getElementById("status-clock")) { document.getElementById("status-clock").innerText = `${hours}:${minutes}`; }
     }
 
     // Lifecycle initialization
@@ -2146,7 +2139,7 @@
       if (profileTapCount >= 10) {
         profileTapCount = 0;
         showToast("Режим редактирования открыт");
-        switchTab('admin');
+        switchTab('admin'); switchDbTab('grades');
       }
     }
   </script>
