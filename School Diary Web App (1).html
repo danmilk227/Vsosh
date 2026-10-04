@@ -1,0 +1,2174 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Электронный дневник «Моя школа»</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            appDark: '#050507',
+            appCard: '#151518',
+            appCardHover: '#1c1c21',
+            appBorder: '#232329',
+            appActiveBlue: '#2563eb',
+            appCyan: '#06b6d4',
+            appGold: '#f59e0b',
+            appPurple: '#a855f7',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    input, textarea, select {
+      user-select: text;
+    }
+    /* Hide scrollbar for neat mobile look */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    /* Bottom sheet animation */
+    .sheet-enter {
+      transform: translateY(100%);
+      transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .sheet-active {
+      transform: translateY(0);
+    }
+    
+    /* Keypad press effect */
+    .key-press:active {
+      background-color: rgba(37, 99, 235, 0.25);
+      transform: scale(0.94);
+    }
+  </style>
+</head>
+<body class="bg-[#0b0c10] text-[#f3f4f6] font-sans min-h-screen flex items-center justify-center p-0 md:p-4 overflow-x-hidden">
+
+  <!-- Outer Wrapper with Device Frame Toggle -->
+  <div id="device-wrapper" class="relative w-full max-w-[430px] h-[100dvh] md:h-[890px] bg-black md:rounded-[44px] md:shadow-[0_25px_70px_rgba(0,0,0,0.85)] md:border-[10px] md:border-[#202026] overflow-hidden flex flex-col transition-all duration-300">
+    
+    <!-- Top Hardware Notch / Dynamic Island on desktop -->
+    <div class="hidden md:flex absolute top-2 left-1/2 -translate-x-1/2 w-28 h-5 bg-[#18181b] rounded-full z-50 pointer-events-none items-center justify-center">
+      <div class="w-3 h-3 rounded-full bg-black/60 mr-3"></div>
+      <div class="w-2.5 h-2.5 rounded-full bg-[#09090b]"></div>
+    </div>
+
+    <!-- Controls Floating Pill (Desktop View Toggle & Audio) -->
+    <div class="absolute -top-12 md:-top-11 right-0 hidden md:flex items-center gap-2 z-50">
+      <button onclick="toggleDeviceView()" class="px-3 py-1 text-xs font-medium rounded-full bg-[#1e1e24] text-gray-300 hover:text-white border border-gray-700 hover:border-gray-500 transition-colors shadow">
+        📱 Режим экрана
+      </button>
+      <button onclick="toggleSound()" id="sound-btn" class="px-3 py-1 text-xs font-medium rounded-full bg-[#1e1e24] text-gray-300 hover:text-white border border-gray-700 hover:border-gray-500 transition-colors shadow">
+        🔊 Звук: Вкл
+      </button>
+    </div>
+
+    <!-- Mobile Status Bar (From Video: 12:43, 4G, 65%) -->
+    <div class="w-full pt-3 pb-1 px-6 flex justify-between items-center text-xs text-white z-40 select-none bg-black/95">
+      <span id="status-clock" class="font-semibold tracking-wide">12:43</span>
+      <div class="flex items-center space-x-2 text-[11px]">
+        <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse" title="Запись экрана"></div>
+        <span class="font-bold text-[10px]">00:04</span>
+        <span class="text-gray-400">•</span>
+        <span class="font-medium">4G</span>
+        <!-- Cellular Signal Icon -->
+        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+          <path d="M2 20h20L12 4 2 20z"/>
+        </svg>
+        <!-- Battery Icon 65% -->
+        <div class="flex items-center space-x-0.5">
+          <span class="text-[10px] font-medium text-gray-300">65</span>
+          <div class="w-4 h-2.5 border border-white rounded-[3px] p-[1px] flex items-center">
+            <div class="h-full bg-white rounded-[1px] w-[65%]"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 1: PIN LOCK SCREEN (Frames 00:03 - 00:08) -->
+    <div id="screen-lock" class="absolute inset-0 top-7 bg-black z-30 flex flex-col justify-between items-center py-6 px-8 transition-opacity duration-300">
+      
+      <!-- Top User Info -->
+      <div class="flex flex-col items-center mt-6">
+        <div class="relative w-20 h-20 rounded-full border-2 border-blue-500 flex items-center justify-center p-1 shadow-[0_0_20px_rgba(37,99,235,0.35)]">
+          <!-- User Silhouette Icon -->
+          <svg class="w-12 h-12 text-white/90" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+          </svg>
+        </div>
+        <h2 id="lock-username" class="mt-4 text-xl font-bold tracking-wider uppercase text-white">ДАНИИЛ</h2>
+        <p class="mt-6 text-sm text-gray-400 font-medium">Введите код</p>
+        
+        <!-- PIN Dots (4 indicators) -->
+        <div class="flex items-center gap-4 mt-4" id="pin-dots">
+          <div class="pin-dot w-3 h-3 rounded-full bg-[#27272a] transition-all duration-150"></div>
+          <div class="pin-dot w-3 h-3 rounded-full bg-[#27272a] transition-all duration-150"></div>
+          <div class="pin-dot w-3 h-3 rounded-full bg-[#27272a] transition-all duration-150"></div>
+          <div class="pin-dot w-3 h-3 rounded-full bg-[#27272a] transition-all duration-150"></div>
+        </div>
+
+        <!-- Quick Demo Hint -->
+        <button onclick="quickBypassPin()" class="mt-4 text-xs text-blue-400 hover:text-blue-300 underline underline-offset-4">
+          Быстрый вход (Код: 0000)
+        </button>
+      </div>
+
+      <!-- Numeric Keypad -->
+      <div class="w-full max-w-[280px] grid grid-cols-3 gap-y-5 gap-x-6 text-center text-blue-400 font-medium mb-4">
+        <button onclick="handleKeypad('1')" class="key-press h-14 rounded-full text-2xl flex items-center justify-center transition-all">1</button>
+        <button onclick="handleKeypad('2')" class="key-press h-14 rounded-full text-2xl flex items-center justify-center transition-all">2</button>
+        <button onclick="handleKeypad('3')" class="key-press h-14 rounded-full text-2xl flex items-center justify-center transition-all">3</button>
+        <button onclick="handleKeypad('4')" class="key-press h-14 rounded-full text-2xl flex items-center justify-center transition-all">4</button>
+        <button onclick="handleKeypad('5')" class="key-press h-14 rounded-full text-2xl flex items-center justify-center transition-all">5</button>
+        <button onclick="handleKeypad('6')" class="key-press h-14 rounded-full text-2xl flex items-center justify-center transition-all">6</button>
+        <button onclick="handleKeypad('7')" class="key-press h-14 rounded-full text-2xl flex items-center justify-center transition-all">7</button>
+        <button onclick="handleKeypad('8')" class="key-press h-14 rounded-full text-2xl flex items-center justify-center transition-all">8</button>
+        <button onclick="handleKeypad('9')" class="key-press h-14 rounded-full text-2xl flex items-center justify-center transition-all">9</button>
+        
+        <!-- Bottom Row: Exit, 0, Backspace/Fingerprint -->
+        <button onclick="resetPinInput()" class="text-xs text-blue-500 font-normal flex items-center justify-center hover:text-blue-300">Выйти</button>
+        <button onclick="handleKeypad('0')" class="key-press h-14 rounded-full text-2xl flex items-center justify-center transition-all">0</button>
+        <button onclick="handleKeypad('back')" class="flex items-center justify-center text-blue-400 hover:text-blue-200">
+          <!-- Backspace Icon / Fingerprint -->
+          <svg class="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75L14.25 12m0 0l2.25 2.25M14.25 12l2.25-2.25M14.25 12L12 14.25m-2.58 4.92l-6.375-6.375a1.125 1.125 0 010-1.59L9.42 4.83A2.25 2.25 0 0111.01 4.2h9.74A2.25 2.25 0 0123 6.45v11.1a2.25 2.25 0 01-2.25 2.25h-9.74a2.25 2.25 0 01-1.59-.63z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Home Bar Indicator -->
+      <div class="w-32 h-1 bg-white/40 rounded-full mt-2"></div>
+    </div>
+
+    <!-- SCREEN 2: MAIN DIARY APP (Tabs: Лента, Расписание, Задания, Оценки, ДАНИИЛ) -->
+    <div id="screen-main" class="relative flex-1 flex flex-col bg-black overflow-hidden select-none">
+      
+      <!-- Scrollable Tab Container -->
+      <main id="main-content" class="flex-1 overflow-y-auto no-scrollbar relative">
+        
+        <!-- TAB 1: ЛЕНТА (Feed) -->
+        <section id="tab-feed" class="tab-pane block pb-24">
+          <!-- Feed Header Icons -->
+          <div class="px-5 py-3 flex items-center justify-between">
+            <button onclick="showToast('Сканер QR-кода МЭШ')" class="p-2 -ml-2 text-gray-300 hover:text-white">
+              <!-- QR Scanner Icon -->
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14 14h3v3h-3zM18 18h3v3h-3zM14 18h2v2h-2z"/>
+              </svg>
+            </button>
+
+            <!-- Center Avatars / Spheres from Video -->
+            <div class="flex -space-x-1.5 items-center">
+              <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-500 border border-black flex items-center justify-center text-[10px] font-bold">✨</div>
+              <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-pink-500 to-rose-400 border border-black flex items-center justify-center text-[10px] font-bold">🐱</div>
+              <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 border border-black flex items-center justify-center text-[10px] font-bold">⭐</div>
+            </div>
+
+            <!-- Profile/Notification Badge -->
+            <button onclick="switchTab('profile')" class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 p-[1.5px] relative">
+              <div class="w-full h-full bg-black rounded-full flex items-center justify-center">
+                <span class="text-xs font-semibold text-white">Д</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Stories / Promo Banner with Cat Drawing -->
+          <div class="px-4 mt-1">
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#d9f99d]/90 via-[#a7f3d0]/90 to-[#99f6e4]/90 p-4 text-black shadow-lg">
+              <div class="pr-20">
+                <h3 class="text-base font-bold leading-tight">Расскажите, какими вы видите своих учителей</h3>
+              </div>
+              <!-- Cat Sketch Illustration -->
+              <div class="absolute right-2 bottom-1 w-20 h-20 opacity-95">
+                <svg viewBox="0 0 100 100" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- Heart outline -->
+                  <path d="M 65 30 C 65 20, 85 20, 85 35 C 85 50, 65 65, 65 65 C 65 65, 45 50, 45 35 C 45 20, 65 20, 65 30" stroke="#f43f5e" fill="#ffe4e6" stroke-width="1.5" />
+                  <!-- Cat head & ears -->
+                  <path d="M 30 75 C 20 60, 20 45, 30 35 L 35 20 L 45 30 C 55 28, 65 28, 75 30 L 85 20 L 90 35 C 100 45, 100 60, 90 75 Z" fill="white" stroke="#334155" stroke-width="2"/>
+                  <!-- Eyes -->
+                  <circle cx="48" cy="48" r="2.5" fill="#334155"/>
+                  <circle cx="72" cy="48" r="2.5" fill="#334155"/>
+                  <!-- Nose & smile -->
+                  <path d="M 58 54 L 62 54 L 60 57 Z" fill="#f43f5e"/>
+                  <path d="M 55 58 Q 60 62 65 58" stroke="#334155" stroke-width="1.8"/>
+                  <!-- Whiskers -->
+                  <path d="M 36 50 L 24 48 M 36 54 L 22 55 M 84 50 L 96 48 M 84 54 L 98 55" stroke="#334155" stroke-width="1.5"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Feed Items (Populated by JS) -->
+          <div id="feed-timeline" class="mt-4 px-4 space-y-4">
+            <!-- Feed timeline items will render here -->
+          </div>
+        </section>
+
+        <!-- TAB 2: РАСПИСАНИЕ (Schedule) -->
+        <section id="tab-schedule" class="tab-pane hidden pb-24">
+          <!-- Top Bar -->
+          <div class="px-5 pt-3 pb-2 flex items-center justify-between">
+            <button onclick="shareSchedule()" class="text-gray-300 hover:text-white">
+              <svg class="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/>
+              </svg>
+            </button>
+            <h1 class="text-lg font-bold text-white tracking-wide">Расписание</h1>
+            <div class="px-2 py-0.5 rounded border border-gray-600 text-[11px] font-semibold text-gray-300">КР</div>
+          </div>
+
+          <!-- Day of Week Selector (Horizontal Scroll) -->
+          <div class="px-4 py-2 border-b border-[#1f1f23]">
+            <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1" id="schedule-days-bar">
+              <!-- Calendar icon -->
+              <button onclick="showDatePickerModal()" class="w-10 h-12 flex-shrink-0 rounded-2xl bg-[#16161a] border border-[#26262e] flex items-center justify-center text-gray-300">
+                <svg class="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+                </svg>
+              </button>
+              <!-- Day Pills rendered by JS -->
+              <div id="schedule-day-chips" class="flex space-x-2"></div>
+            </div>
+          </div>
+
+          <!-- Schedule Lesson List or Empty State -->
+          <div id="schedule-content" class="p-4 space-y-2.5">
+            <!-- Injected by JS -->
+          </div>
+
+          <!-- Floating Action Button (+) -->
+          <button onclick="openAddLessonModal()" class="fixed bottom-20 right-6 md:absolute md:bottom-20 md:right-6 w-14 h-14 rounded-full bg-[#1e88e5] text-white shadow-xl flex items-center justify-center hover:bg-blue-600 active:scale-95 transition-all z-20">
+            <svg class="w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+          </button>
+        </section>
+
+        <!-- TAB 3: ЗАДАНИЯ (Homework) -->
+        <section id="tab-tasks" class="tab-pane hidden pb-24">
+          <!-- Top Bar -->
+          <div class="px-5 pt-3 pb-2 flex items-center justify-between">
+            <button onclick="shareSchedule()" class="text-gray-300 hover:text-white">
+              <svg class="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/>
+              </svg>
+            </button>
+            <h1 class="text-lg font-bold text-white tracking-wide">Задания</h1>
+            <div class="flex items-center space-x-3 text-gray-300">
+              <button onclick="showToast('Вид переключен')" class="hover:text-white">
+                <svg class="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"/>
+                </svg>
+              </button>
+              <button onclick="showToast('Фильтры заданий')" class="hover:text-white">
+                <svg class="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Day Chips for Tasks -->
+          <div class="px-4 py-2 border-b border-[#1f1f23]">
+            <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1" id="tasks-days-bar">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Homework Content List or Empty State -->
+          <div id="tasks-content" class="p-4 space-y-3">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Floating Button (+) Add Task -->
+          <button onclick="openAddTaskModal()" class="fixed bottom-20 right-6 md:absolute md:bottom-20 md:right-6 w-14 h-14 rounded-full bg-[#1e88e5] text-white shadow-xl flex items-center justify-center hover:bg-blue-600 active:scale-95 transition-all z-20">
+            <svg class="w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+          </button>
+        </section>
+
+        <!-- TAB 4: ОЦЕНКИ (Grades) -->
+        <section id="tab-grades" class="tab-pane hidden pb-24">
+          <!-- Top Bar -->
+          <div class="px-5 pt-3 pb-2 flex items-center justify-between">
+            <div class="w-6"></div>
+            <h1 class="text-lg font-bold text-white tracking-wide">Оценки</h1>
+            <div class="flex items-center space-x-2">
+              <button onclick="showToast('Вид списка оценок')" class="text-gray-300 hover:text-white">
+                <svg class="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"/>
+                </svg>
+              </button>
+              <div class="px-2 py-0.5 rounded border border-gray-600 text-[11px] font-semibold text-gray-300">КР</div>
+            </div>
+          </div>
+
+          <!-- Sub-header Pill Buttons: Статистика & Итоговые -->
+          <div class="px-4 py-3 flex gap-3">
+            <button onclick="showGradesStatsModal()" class="flex-1 py-2.5 px-4 rounded-xl bg-[#17171c] border border-[#272730] hover:bg-[#202027] flex items-center justify-center space-x-2 text-sm font-medium transition-colors">
+              <span class="w-5 h-5 rounded-md bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs">📊</span>
+              <span>Статистика</span>
+            </button>
+            <button onclick="showFinalGradesModal()" class="flex-1 py-2.5 px-4 rounded-xl bg-[#17171c] border border-[#272730] hover:bg-[#202027] flex items-center justify-center space-x-2 text-sm font-medium transition-colors">
+              <span class="w-5 h-5 rounded-md bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs">📑</span>
+              <span>Итоговые</span>
+            </button>
+          </div>
+
+          <!-- Grades List Grouped by Weeks & Dates -->
+          <div id="grades-content" class="px-4 space-y-5">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Add Grade Button -->
+          <button onclick="openAddGradeModal()" class="fixed bottom-20 right-6 md:absolute md:bottom-20 md:right-6 w-14 h-14 rounded-full bg-[#1e88e5] text-white shadow-xl flex items-center justify-center hover:bg-blue-600 active:scale-95 transition-all z-20">
+            <svg class="w-8 h-8 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+          </button>
+        </section>
+
+        <!-- TAB 5: ДАНИИЛ (Profile) -->
+        <section id="tab-profile" class="tab-pane hidden pb-24">
+          <!-- Profile Card -->
+          <div class="pt-6 pb-4 flex flex-col items-center">
+            <div class="relative w-24 h-24 rounded-full border-4 border-blue-500/90 flex items-center justify-center p-1 shadow-[0_0_25px_rgba(37,99,235,0.45)]">
+              <!-- Stylized User Avatar from Video -->
+              <svg class="w-16 h-16 text-[#e2e8f0]" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C9.243 2 7 4.243 7 7c0 2.21 1.442 4.085 3.447 4.733C6.31 12.35 3.5 15.86 3.5 20c0 .55.45 1 1 1h15c.55 0 1-.45 1-1 0-4.14-2.81-7.65-6.947-8.267C15.558 11.085 17 9.21 17 7c0-2.757-2.243-5-5-5zm0 2c1.654 0 3 1.346 3 3s-1.346 3-3 3-3-1.346-3-3 1.346-3 3-3zm0 9c3.314 0 6.223 2.146 7.158 5H4.842C5.777 15.146 8.686 13 12 13z"/>
+              </svg>
+            </div>
+            <h2 id="profile-name" class="mt-3 text-xl font-bold tracking-wide uppercase text-white">ДАНИИЛ</h2>
+            <p id="profile-class" class="text-sm text-gray-400">11 «А» класс</p>
+          </div>
+
+          <!-- Menu items from video screenshot -->
+          <div class="px-4 space-y-2.5 mt-2">
+            
+            <!-- Database Manager (Highlighted Special Item) -->
+            <button onclick="openDatabaseManagerModal()" class="w-full p-4 rounded-2xl bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-purple-900/40 border border-blue-500/40 hover:border-blue-400 flex items-center justify-between text-left transition-all">
+              <div class="flex items-center space-x-3.5">
+                <div class="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
+                  💾
+                </div>
+                <div>
+                  <div class="text-sm font-semibold text-white">Управление базой данных</div>
+                  <div class="text-xs text-blue-300">Редактор расписания, оценок, экспорт и импорт JSON</div>
+                </div>
+              </div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-blue-500/30 text-blue-200">CRUD</span>
+            </button>
+
+            <!-- Standard App Menu List -->
+            <button onclick="showToast('Настройки дневника')" class="w-full p-4 rounded-2xl bg-[#151518] border border-[#232328] hover:bg-[#1a1a1f] flex items-center justify-between text-left transition-all">
+              <div class="flex items-center space-x-3.5">
+                <span class="text-blue-400 text-lg">⚙️</span>
+                <span class="text-sm font-medium text-gray-200">Настройки</span>
+              </div>
+              <span class="text-gray-500">›</span>
+            </button>
+
+            <button onclick="showToast('Помощь и контакты поддержки')" class="w-full p-4 rounded-2xl bg-[#151518] border border-[#232328] hover:bg-[#1a1a1f] flex items-center justify-between text-left transition-all">
+              <div class="flex items-center space-x-3.5">
+                <span class="text-blue-400 text-lg">❓</span>
+                <span class="text-sm font-medium text-gray-200">Помощь и поддержка</span>
+              </div>
+              <span class="text-gray-500">›</span>
+            </button>
+
+            <button onclick="showToast('Голосовой помощник Алиса подключен')" class="w-full p-4 rounded-2xl bg-[#151518] border border-[#232328] hover:bg-[#1a1a1f] flex items-center justify-between text-left transition-all">
+              <div class="flex items-center space-x-3.5">
+                <span class="text-purple-400 text-lg">🟣</span>
+                <span class="text-sm font-medium text-gray-200">Настроить Алису</span>
+              </div>
+              <span class="text-gray-500">›</span>
+            </button>
+
+            <button onclick="openChangeRegionModal()" class="w-full p-4 rounded-2xl bg-[#151518] border border-[#232328] hover:bg-[#1a1a1f] flex items-center justify-between text-left transition-all">
+              <div class="flex items-center space-x-3.5">
+                <span class="text-blue-400 text-lg">📍</span>
+                <div>
+                  <span class="text-sm font-medium text-gray-200">Выбор региона</span>
+                  <div id="profile-region-display" class="text-xs text-gray-400">Челябинская область</div>
+                </div>
+              </div>
+              <span class="text-gray-500">›</span>
+            </button>
+
+            <button onclick="openEditProfileModal()" class="w-full p-4 rounded-2xl bg-[#151518] border border-[#232328] hover:bg-[#1a1a1f] flex items-center justify-between text-left transition-all">
+              <div class="flex items-center space-x-3.5">
+                <span class="text-blue-400 text-lg">👤</span>
+                <span class="text-sm font-medium text-gray-200">Мой профиль</span>
+              </div>
+              <span class="text-gray-500">›</span>
+            </button>
+
+            <button onclick="showAboutModal()" class="w-full p-4 rounded-2xl bg-[#151518] border border-[#232328] hover:bg-[#1a1a1f] flex items-center justify-between text-left transition-all">
+              <div class="flex items-center space-x-3.5">
+                <span class="text-blue-400 text-lg">ℹ️</span>
+                <span class="text-sm font-medium text-gray-200">О приложении</span>
+              </div>
+              <span class="text-gray-500">›</span>
+            </button>
+
+            <!-- Logout Button (Locks back to PIN screen) -->
+            <div class="pt-4 pb-2 text-center">
+              <button onclick="lockApp()" class="text-sm font-medium text-blue-400 hover:text-blue-300 active:scale-95 transition-all">
+                Выйти
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Bottom 5-Tab Navigation Bar -->
+      <nav class="absolute bottom-0 left-0 right-0 h-20 bg-black/95 backdrop-blur-md border-t border-[#1e1e24] flex items-center justify-around px-2 z-30 select-none">
+        
+        <!-- Tab 1: Лента -->
+        <button onclick="switchTab('feed')" id="nav-btn-feed" class="flex flex-col items-center justify-center flex-1 h-full text-appGold transition-colors">
+          <svg class="w-6 h-6 fill-current mb-1" viewBox="0 0 24 24">
+            <path d="M12 2a7 7 0 00-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 001 1h6a1 1 0 001-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 00-7-7zm2 14h-4v-1h4v1zm-2 5a2 2 0 01-2-2h4a2 2 0 01-2 2z"/>
+          </svg>
+          <span class="text-[11px] font-semibold">Лента</span>
+        </button>
+
+        <!-- Tab 2: Расписание -->
+        <button onclick="switchTab('schedule')" id="nav-btn-schedule" class="flex flex-col items-center justify-center flex-1 h-full text-gray-500 hover:text-gray-300 transition-colors">
+          <svg class="w-6 h-6 stroke-current mb-1" fill="none" viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+          </svg>
+          <span class="text-[11px] font-medium">Расписан...</span>
+        </button>
+
+        <!-- Tab 3: Задания -->
+        <button onclick="switchTab('tasks')" id="nav-btn-tasks" class="flex flex-col items-center justify-center flex-1 h-full text-gray-500 hover:text-gray-300 transition-colors">
+          <svg class="w-6 h-6 stroke-current mb-1" fill="none" viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+          </svg>
+          <span class="text-[11px] font-medium">Задания</span>
+        </button>
+
+        <!-- Tab 4: Оценки -->
+        <button onclick="switchTab('grades')" id="nav-btn-grades" class="flex flex-col items-center justify-center flex-1 h-full text-gray-500 hover:text-gray-300 transition-colors">
+          <svg class="w-6 h-6 stroke-current mb-1" fill="none" viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/>
+          </svg>
+          <span class="text-[11px] font-medium">Оценки</span>
+        </button>
+
+        <!-- Tab 5: ДАНИИЛ -->
+        <button onclick="switchTab('profile')" id="nav-btn-profile" class="flex flex-col items-center justify-center flex-1 h-full text-gray-500 hover:text-gray-300 transition-colors">
+          <svg class="w-6 h-6 stroke-current mb-1" fill="none" viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+          </svg>
+          <span id="nav-label-profile" class="text-[11px] font-medium uppercase truncate max-w-[65px]">ДАНИИЛ</span>
+        </button>
+
+      </nav>
+
+      <!-- Bottom Phone Indicator Bar -->
+      <div class="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/30 rounded-full pointer-events-none z-40"></div>
+    </div>
+
+    <!-- MODAL: DETAILED GRADE SHEET (Frames 00:32 & 00:34) -->
+    <div id="grade-detail-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex-col justify-end transition-opacity duration-300">
+      <div onclick="closeGradeDetailModal()" class="flex-1"></div>
+      
+      <!-- Bottom Sheet Container -->
+      <div class="relative w-full max-w-[430px] mx-auto bg-[#131316] border-t border-[#272730] rounded-t-3xl p-6 shadow-2xl sheet-enter" id="grade-sheet-body">
+        
+        <!-- Top Drag Pill -->
+        <div class="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-4"></div>
+
+        <!-- Grade Header Info -->
+        <div class="text-xs text-gray-400 font-medium" id="sheet-date-caption">получена 24 сентября</div>
+        
+        <div class="flex items-center space-x-1.5 mt-1 cursor-pointer">
+          <h2 id="sheet-subject-title" class="text-2xl font-bold text-white">История</h2>
+          <span class="text-gray-400 text-xl font-light">›</span>
+        </div>
+        
+        <p id="sheet-work-subtitle" class="text-sm text-gray-300 mt-0.5">Ответ на уроке 24 сентября</p>
+
+        <!-- Grade Square + Cat Vector Art Area -->
+        <div class="mt-6 flex items-center justify-between">
+          <!-- Big Grade Square Box -->
+          <div id="sheet-grade-box" class="w-28 h-28 rounded-2xl border-2 border-white/20 bg-[#1b1b22] flex items-center justify-center text-5xl font-extrabold text-white shadow-inner">
+            5
+          </div>
+
+          <!-- Cat Illustration Dynamic Slot -->
+          <div id="sheet-cat-container" class="w-44 h-28 flex items-center justify-center">
+            <!-- Dynamic SVG injected by JS -->
+          </div>
+        </div>
+
+        <!-- Optional Class Stats Link (for grades <= 3) -->
+        <div id="sheet-class-stats-row" class="mt-5 hidden">
+          <button onclick="showToast('Статистика оценок по классу: средний балл 3.8')" class="text-sm text-blue-400 hover:text-blue-300 font-medium">
+            Статистика по классу
+          </button>
+        </div>
+
+        <!-- Details block -->
+        <div class="mt-5 pt-4 border-t border-[#23232a]">
+          <div class="text-xs text-gray-400">Вид и название работы</div>
+          <div id="sheet-work-type" class="text-sm text-white font-medium mt-0.5">Зачет</div>
+          <div id="sheet-comment-container" class="mt-2 text-xs text-gray-400 hidden">
+            <span>Комментарий: </span><span id="sheet-comment-text" class="text-gray-200"></span>
+          </div>
+        </div>
+
+        <!-- Sheet Footer: Share button, Edit/Delete, and Big Blue Close Button (X) -->
+        <div class="mt-8 pt-2 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <button onclick="shareCurrentGrade()" class="flex items-center space-x-2 text-blue-400 hover:text-blue-300 text-sm font-medium">
+              <svg class="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/>
+              </svg>
+              <span>Поделиться</span>
+            </button>
+            <button onclick="editGradeFromSheet()" class="text-xs px-2.5 py-1 rounded-lg bg-gray-800 text-gray-300 hover:text-white">
+              Изменить
+            </button>
+            <button onclick="deleteGradeFromSheet()" class="text-xs px-2.5 py-1 rounded-lg bg-red-950/60 text-red-300 hover:text-red-200">
+              Удалить
+            </button>
+          </div>
+
+          <!-- Round Blue Close Button (X) from screenshot -->
+          <button onclick="closeGradeDetailModal()" class="w-12 h-12 rounded-full bg-[#1e88e5] text-white flex items-center justify-center hover:bg-blue-600 active:scale-95 transition-all shadow-lg">
+            <svg class="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MODAL: DATABASE MANAGER (Full CRUD for Schedule, Grades, Homework) -->
+    <div id="db-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex-col items-center justify-center p-3">
+      <div class="relative w-full max-w-[420px] bg-[#121216] border border-[#272733] rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+        
+        <div class="flex items-center justify-between pb-3 border-b border-[#23232c]">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">🗄️</span>
+            <h3 class="text-base font-bold text-white">Управление базой данных</h3>
+          </div>
+          <button onclick="closeDatabaseManagerModal()" class="w-8 h-8 rounded-full bg-gray-800 text-gray-300 hover:text-white flex items-center justify-center">✕</button>
+        </div>
+
+        <!-- Manager Tabs -->
+        <div class="flex border-b border-[#23232c] mt-3">
+          <button onclick="switchDbTab('schedule')" id="dbtab-schedule" class="flex-1 py-2 text-xs font-semibold text-blue-400 border-b-2 border-blue-500">Расписание</button>
+          <button onclick="switchDbTab('grades')" id="dbtab-grades" class="flex-1 py-2 text-xs font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200">Оценки</button>
+          <button onclick="switchDbTab('tasks')" id="dbtab-tasks" class="flex-1 py-2 text-xs font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200">Задания</button>
+          <button onclick="switchDbTab('io')" id="dbtab-io" class="flex-1 py-2 text-xs font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200">JSON</button>
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-1 overflow-y-auto no-scrollbar py-3" id="db-content-area">
+          <!-- Injected dynamically -->
+        </div>
+
+        <!-- DB Modal Footer Actions -->
+        <div class="pt-3 border-t border-[#23232c] flex items-center justify-between">
+          <button onclick="resetDbToDefaults()" class="text-xs text-red-400 hover:text-red-300 font-medium">
+            ↺ Сброс к видео
+          </button>
+          <button onclick="closeDatabaseManagerModal()" class="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white">
+            Готово
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT LESSON -->
+    <div id="lesson-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+      <div class="w-full max-w-[380px] bg-[#141418] border border-[#2a2a35] rounded-3xl p-5 shadow-2xl">
+        <h3 id="lesson-modal-title" class="text-base font-bold text-white mb-3">Добавить урок</h3>
+        
+        <form onsubmit="handleLessonFormSubmit(event)" class="space-y-3">
+          <input type="hidden" id="lesson-id">
+          
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">День недели</label>
+            <select id="lesson-day" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+              <option value="ПН">Понедельник (ПН)</option>
+              <option value="ВТ">Вторник (ВТ)</option>
+              <option value="СР">Среда (СР)</option>
+              <option value="ЧТ">Четверг (ЧТ)</option>
+              <option value="ПТ">Пятница (ПТ)</option>
+              <option value="СБ">Суббота (СБ)</option>
+              <option value="ВС">Воскресенье (ВС)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Название предмета</label>
+            <input type="text" id="lesson-subject" required placeholder="Например: Математика" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Время (08:00—08:35)</label>
+              <input type="text" id="lesson-time" required placeholder="08:00—08:35" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Кабинет (номер)</label>
+              <input type="text" id="lesson-room" placeholder="307, 215, 313а" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2 pt-1">
+            <input type="checkbox" id="lesson-has-hw" class="w-4 h-4 rounded bg-[#1d1d24] border-[#30303c] text-blue-600 focus:ring-0">
+            <label for="lesson-has-hw" class="text-xs text-gray-300">Показывать значок «ДЗ»</label>
+          </div>
+
+          <div class="flex justify-end space-x-2 pt-2">
+            <button type="button" onclick="closeLessonModal()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs font-semibold">Отмена</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold">Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT GRADE -->
+    <div id="grade-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+      <div class="w-full max-w-[380px] bg-[#141418] border border-[#2a2a35] rounded-3xl p-5 shadow-2xl">
+        <h3 id="grade-modal-title" class="text-base font-bold text-white mb-3">Добавить оценку</h3>
+        
+        <form onsubmit="handleGradeFormSubmit(event)" class="space-y-3">
+          <input type="hidden" id="grade-id">
+
+          <div class="grid grid-cols-3 gap-2">
+            <div class="col-span-2">
+              <label class="block text-xs text-gray-400 mb-1">Предмет</label>
+              <input type="text" id="grade-subject" required placeholder="История, Информатика" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Балл (1-5)</label>
+              <select id="grade-score" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                <option value="5">5</option>
+                <option value="4">4</option>
+                <option value="3">3</option>
+                <option value="2">2</option>
+                <option value="1">1</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Дата</label>
+              <input type="text" id="grade-date" required placeholder="24 сентября" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Время</label>
+              <input type="text" id="grade-time" required placeholder="11:34" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Тип работы</label>
+            <input type="text" id="grade-type" required placeholder="Ответ на уроке, Контрольная работа" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Вид работы (Зачет, Контрольная и т.д.)</label>
+            <input type="text" id="grade-workname" placeholder="Зачет" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Комментарий учителя (опционально)</label>
+            <input type="text" id="grade-comment" placeholder="Отличная работа!" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+          </div>
+
+          <div class="flex justify-end space-x-2 pt-2">
+            <button type="button" onclick="closeGradeModal()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs font-semibold">Отмена</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold">Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT HOMEWORK -->
+    <div id="task-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+      <div class="w-full max-w-[380px] bg-[#141418] border border-[#2a2a35] rounded-3xl p-5 shadow-2xl">
+        <h3 id="task-modal-title" class="text-base font-bold text-white mb-3">Новое домашнее задание</h3>
+        
+        <form onsubmit="handleTaskFormSubmit(event)" class="space-y-3">
+          <input type="hidden" id="task-id">
+
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Предмет</label>
+            <input type="text" id="task-subject" required placeholder="Информатика, Физика" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">День недели</label>
+              <select id="task-day-label" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                <option value="ПН">ПН (5 окт)</option>
+                <option value="ВТ">ВТ (6 окт)</option>
+                <option value="СР">СР (7 окт)</option>
+                <option value="ЧТ">ЧТ (8 окт)</option>
+                <option value="ПТ">ПТ (9 окт)</option>
+                <option value="СБ">СБ (10 окт)</option>
+                <option value="ВС">ВС (4 окт)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Время публикации</label>
+              <input type="text" id="task-time" required placeholder="22:03" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Описание задания</label>
+            <textarea id="task-text" required rows="3" placeholder="В Я_учебнике: 1) Повторить материал урока 4..." class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"></textarea>
+          </div>
+
+          <div class="flex justify-end space-x-2 pt-2">
+            <button type="button" onclick="closeTaskModal()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs font-semibold">Отмена</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold">Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Profile Edit Modal -->
+    <div id="edit-profile-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+      <div class="w-full max-w-[360px] bg-[#141418] border border-[#2a2a35] rounded-3xl p-5 shadow-2xl">
+        <h3 class="text-base font-bold text-white mb-3">Редактирование профиля</h3>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Имя ученика</label>
+            <input type="text" id="edit-input-name" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Класс</label>
+            <input type="text" id="edit-input-class" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">PIN-код для входа</label>
+            <input type="password" maxlength="4" id="edit-input-pin" class="w-full bg-[#1d1d24] border border-[#30303c] rounded-xl px-3 py-2 text-sm text-white">
+          </div>
+          <div class="flex justify-end space-x-2 pt-2">
+            <button onclick="closeEditProfileModal()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs">Отмена</button>
+            <button onclick="saveProfileChanges()" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold">Сохранить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Region Select Modal -->
+    <div id="region-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+      <div class="w-full max-w-[360px] bg-[#141418] border border-[#2a2a35] rounded-3xl p-5 shadow-2xl">
+        <h3 class="text-base font-bold text-white mb-3">Выбор региона</h3>
+        <div class="space-y-2 max-h-60 overflow-y-auto no-scrollbar">
+          <button onclick="setRegion('Челябинская область')" class="w-full text-left p-2.5 rounded-xl hover:bg-gray-800 text-sm text-gray-200">Челябинская область</button>
+          <button onclick="setRegion('Москва (МЭШ)')" class="w-full text-left p-2.5 rounded-xl hover:bg-gray-800 text-sm text-gray-200">Москва (МЭШ)</button>
+          <button onclick="setRegion('Московская область')" class="w-full text-left p-2.5 rounded-xl hover:bg-gray-800 text-sm text-gray-200">Московская область</button>
+          <button onclick="setRegion('Санкт-Петербург')" class="w-full text-left p-2.5 rounded-xl hover:bg-gray-800 text-sm text-gray-200">Санкт-Петербург</button>
+          <button onclick="setRegion('Свердловская область')" class="w-full text-left p-2.5 rounded-xl hover:bg-gray-800 text-sm text-gray-200">Свердловская область</button>
+        </div>
+        <div class="flex justify-end pt-3">
+          <button onclick="closeRegionModal()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 text-xs">Закрыть</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generic Toast Message Notification Box (Never browser alert) -->
+    <div id="toast-box" class="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-[#22222b]/95 border border-gray-600/60 text-white text-xs px-4 py-2.5 rounded-full shadow-2xl backdrop-blur-md transition-all duration-300 opacity-0 pointer-events-none -translate-y-4">
+      Уведомление
+    </div>
+
+  </div>
+
+  <!-- Reusable Inline SVGs for Cats (Matching the exact video art style) -->
+  <script>
+    // 1. Cat with Coffee mug (Sunday schedule empty state)
+    const CAT_COFFEE_SVG = `
+      <svg class="w-48 h-48 mx-auto" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Coffee steam -->
+        <path d="M 50 70 Q 45 60 52 50" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M 60 72 Q 55 58 63 46" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Coffee Mug -->
+        <path d="M 38 78 H 72 V 104 C 72 114 38 114 38 104 Z" fill="white" stroke="black" stroke-width="3"/>
+        <path d="M 72 84 C 82 84 82 98 72 98" fill="none" stroke="black" stroke-width="3"/>
+        <!-- White Cat Body and Head -->
+        <path d="M 55 160 C 55 120 75 110 95 110 C 135 110 160 130 160 165" fill="white" stroke="black" stroke-width="3.5"/>
+        <!-- Head -->
+        <path d="M 75 120 C 60 95 65 70 80 55 L 90 35 L 110 50 C 125 48 140 48 155 50 L 175 35 L 185 55 C 200 70 205 95 190 120 C 170 140 95 140 75 120 Z" fill="white" stroke="black" stroke-width="3.5" stroke-linejoin="round"/>
+        <!-- Inner Ears -->
+        <path d="M 92 48 L 105 55" stroke="black" stroke-width="2"/>
+        <path d="M 173 48 L 160 55" stroke="black" stroke-width="2"/>
+        <!-- Eyes -->
+        <circle cx="112" cy="78" r="4.5" fill="black"/>
+        <circle cx="152" cy="78" r="4.5" fill="black"/>
+        <!-- Nose and Mouth -->
+        <path d="M 130 86 L 134 86 L 132 89 Z" fill="black"/>
+        <path d="M 124 93 Q 132 99 140 93" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Whiskers -->
+        <path d="M 98 84 L 75 80 M 98 90 L 73 92 M 166 84 L 189 80 M 166 90 L 191 92" stroke="black" stroke-width="2"/>
+        <!-- Paws holding mug -->
+        <ellipse cx="50" cy="100" rx="9" ry="8" fill="white" stroke="black" stroke-width="3"/>
+        <ellipse cx="65" cy="102" rx="9" ry="8" fill="white" stroke="black" stroke-width="3"/>
+      </svg>
+    `;
+
+    // 2. Sleeping Cat in Armchair (Tasks empty state)
+    const CAT_SLEEPING_SVG = `
+      <svg class="w-56 h-48 mx-auto" viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Armchair back & cushions -->
+        <path d="M 30 170 L 30 80 C 30 50 60 40 100 40 L 160 40 C 200 40 220 50 220 80 L 220 170" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M 40 100 C 40 140 60 160 100 160 L 190 160" stroke="white" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 20 120 C 15 140 15 160 30 170 L 220 170" stroke="white" stroke-width="3.5"/>
+        <!-- Sleeping White Cat in Armchair -->
+        <path d="M 80 145 C 80 115 105 100 135 100 C 170 100 185 120 185 145 Z" fill="white" stroke="black" stroke-width="3"/>
+        <!-- Cat Head leaning on paw -->
+        <path d="M 65 110 C 60 90 70 75 80 65 L 85 50 L 98 62 C 110 60 125 60 135 62 L 148 50 L 153 65 C 165 75 170 90 165 110 C 155 130 75 130 65 110 Z" fill="white" stroke="black" stroke-width="3"/>
+        <!-- Sleeping closed happy eyes (^ ^) -->
+        <path d="M 92 85 Q 98 80 104 85" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M 126 85 Q 132 80 138 85" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Cute sleeping mouth & paw under cheek -->
+        <path d="M 112 94 Q 115 97 118 94" stroke="black" stroke-width="2" stroke-linecap="round"/>
+        <ellipse cx="80" cy="115" rx="8" ry="7" fill="white" stroke="black" stroke-width="2.5"/>
+        <!-- Whiskers -->
+        <path d="M 80 90 L 65 87 M 80 95 L 63 97 M 150 90 L 165 87 M 150 95 L 167 97" stroke="black" stroke-width="2"/>
+        <!-- Tiny Zzz sleep curls -->
+        <text x="175" y="60" fill="white" font-size="16" font-family="sans-serif" font-weight="bold">z</text>
+        <text x="190" y="45" fill="white" font-size="20" font-family="sans-serif" font-weight="bold">Z</text>
+      </svg>
+    `;
+
+    // 3. Celebrating Cat with paws up (For grades 5 and 4 - from screenshot 00:32)
+    const CAT_HAPPY_PAWS_SVG = `
+      <svg class="w-full h-full" viewBox="0 0 160 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- White Cat Body -->
+        <path d="M 35 110 C 35 85 50 75 80 75 C 110 75 125 85 125 110 Z" fill="white" stroke="black" stroke-width="3"/>
+        <!-- Left Raised Arm & Paw -->
+        <path d="M 40 80 C 25 60 20 40 25 25 C 32 25 38 32 42 42 L 52 70" fill="white" stroke="black" stroke-width="3"/>
+        <!-- Right Raised Arm & Paw -->
+        <path d="M 120 80 C 135 60 140 40 135 25 C 128 25 122 32 118 42 L 108 70" fill="white" stroke="black" stroke-width="3"/>
+        <!-- Cat Head -->
+        <path d="M 48 68 C 40 50 48 35 58 26 L 64 12 L 75 22 C 85 20 95 20 105 22 L 116 12 L 122 26 C 132 35 140 50 132 68 C 120 82 60 82 48 68 Z" fill="white" stroke="black" stroke-width="3" stroke-linejoin="round"/>
+        <!-- Joyful Open Eyes -->
+        <ellipse cx="72" cy="42" rx="4" ry="4.5" fill="black"/>
+        <ellipse cx="108" cy="42" rx="4" ry="4.5" fill="black"/>
+        <!-- Wide open joyful mouth -->
+        <path d="M 80 50 Q 90 68 100 50 Z" fill="#f43f5e" stroke="black" stroke-width="2"/>
+        <path d="M 88 47 L 92 47 L 90 49 Z" fill="black"/>
+        <!-- Whiskers -->
+        <path d="M 60 48 L 48 45 M 60 54 L 46 56 M 120 48 L 132 45 M 120 54 L 134 56" stroke="black" stroke-width="1.8"/>
+        <!-- Little Sparkles -->
+        <path d="M 18 15 L 22 15 M 20 13 L 20 17" stroke="#f59e0b" stroke-width="2"/>
+        <path d="M 140 15 L 144 15 M 142 13 L 142 17" stroke="#f59e0b" stroke-width="2"/>
+      </svg>
+    `;
+
+    // 4. Thoughtful Cat resting chin on paw (For grades <= 3 - from screenshot 00:34)
+    const CAT_THINKING_SVG = `
+      <svg class="w-full h-full" viewBox="0 0 160 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Body -->
+        <path d="M 40 110 C 40 90 60 80 85 80 C 115 80 130 90 130 110 Z" fill="white" stroke="black" stroke-width="3"/>
+        <!-- Cat Head -->
+        <path d="M 52 70 C 42 55 48 38 60 28 L 66 14 L 78 24 C 88 22 98 22 108 24 L 120 14 L 126 28 C 138 38 142 55 132 70 C 120 84 64 84 52 70 Z" fill="white" stroke="black" stroke-width="3" stroke-linejoin="round"/>
+        <!-- Thoughtful Eyes -->
+        <circle cx="75" cy="45" r="3.5" fill="black"/>
+        <circle cx="110" cy="45" r="3.5" fill="black"/>
+        <!-- Nose and neutral line mouth -->
+        <path d="M 91 50 L 95 50 L 93 52 Z" fill="black"/>
+        <path d="M 86 56 Q 93 54 100 56" stroke="black" stroke-width="2.2" stroke-linecap="round"/>
+        <!-- Hand under chin -->
+        <path d="M 75 80 C 70 70 72 60 84 60 C 92 60 92 68 88 78 Z" fill="white" stroke="black" stroke-width="2.5"/>
+        <!-- Whiskers -->
+        <path d="M 64 50 L 50 48 M 64 56 L 48 58 M 120 50 L 134 48 M 120 56 L 136 58" stroke="black" stroke-width="1.8"/>
+      </svg>
+    `;
+  </script>
+
+  <script>
+    // Authentic state loaded from the video frames
+    const DEFAULT_DATABASE = {
+      profile: {
+        name: "ДАНИИЛ",
+        class: "11 «А» класс",
+        region: "Челябинская область",
+        pin: "0000"
+      },
+      schedule: {
+        "ВС": [],
+        "ПН": [
+          { id: "s1", subject: "Математика", time: "08:00—08:35", room: "" },
+          { id: "s2", subject: "Литература", time: "08:45—09:25", room: "307" },
+          { id: "s3", subject: "Литература", time: "09:40—10:20", room: "307" },
+          { id: "s4", subject: "Физика", time: "10:40—11:20", room: "215" },
+          { id: "s5", subject: "Физика", time: "11:35—12:15", room: "215" },
+          { id: "s6", subject: "География", time: "12:35—13:15", room: "106" },
+          { id: "s7", subject: "География", time: "13:35—14:15", room: "106" }
+        ],
+        "ВТ": [
+          { id: "s8", subject: "Математика", time: "08:00—08:35", room: "" },
+          { id: "s9", subject: "Математика", time: "08:00—08:35", room: "" },
+          { id: "s10", subject: "Англ. яз.", time: "09:40—10:20", room: "313а" },
+          { id: "s11", subject: "Англ. яз.", time: "10:40—11:20", room: "313а" },
+          { id: "s12", subject: "Алгебра и НА", time: "11:35—12:15", room: "310" },
+          { id: "s13", subject: "Алгебра и НА", time: "12:35—13:15", room: "310" }
+        ],
+        "СР": [
+          { id: "s14", subject: "Математика", time: "08:00—08:35", room: "" },
+          { id: "s15", subject: "Математика", time: "08:00—08:35", room: "" },
+          { id: "s16", subject: "Геометрия", time: "08:45—09:25", room: "310" },
+          { id: "s17", subject: "Геометрия", time: "09:40—10:20", room: "310" },
+          { id: "s18", subject: "Информатика", time: "10:40—11:20", room: "208", hasHw: true },
+          { id: "s19", subject: "Информатика", time: "11:35—12:15", room: "" },
+          { id: "s20", subject: "ОБЗР", time: "13:35—14:15", room: "" }
+        ],
+        "ЧТ": [
+          { id: "s21", subject: "Математика", time: "08:00—08:35", room: "" },
+          { id: "s22", subject: "Математика", time: "08:00—08:35", room: "" },
+          { id: "s23", subject: "Информатика", time: "09:40—10:20", room: "208", hasHw: true },
+          { id: "s24", subject: "Информатика", time: "10:40—11:20", room: "208" },
+          { id: "s25", subject: "Алгебра и НА", time: "11:35—12:15", room: "310" },
+          { id: "s26", subject: "Алгебра и НА", time: "12:35—13:15", room: "310" },
+          { id: "s27", subject: "Обществознание", time: "13:35—14:15", room: "" }
+        ],
+        "ПТ": [
+          { id: "s28", subject: "Русский язык", time: "08:00—08:35", room: "305" },
+          { id: "s29", subject: "Русский язык", time: "08:45—09:25", room: "305" },
+          { id: "s30", subject: "История", time: "09:40—10:20", room: "212" },
+          { id: "s31", subject: "Химия", time: "10:40—11:20", room: "114" },
+          { id: "s32", subject: "Биология", time: "11:35—12:15", room: "118" }
+        ],
+        "СБ": []
+      },
+      grades: [
+        {
+          id: "g1",
+          subject: "История",
+          grade: 5,
+          date: "24 сентября",
+          time: "11:34",
+          type: "Ответ на уроке",
+          workName: "Зачет",
+          week: "21 — 27 сентября",
+          comment: "Прекрасный развернутый ответ по теме"
+        },
+        {
+          id: "g2",
+          subject: "Информатика",
+          grade: 3,
+          date: "16 сентября",
+          time: "12:11",
+          type: "Контрольная работа",
+          workName: "Контрольная работа",
+          week: "14 — 20 сентября",
+          comment: "Допущены ошибки в блоках ветвления"
+        }
+      ],
+      tasks: [
+        {
+          id: "t1",
+          subject: "Информатика",
+          text: "В Я_учебнике: 1) Повторить материал урока 4. 2) Решить задачи №14-18.",
+          time: "22:03",
+          dayLabel: "ПН",
+          date: "2 октября",
+          completed: false
+        }
+      ]
+    };
+
+    // Global application store
+    let appDb = null;
+    let selectedScheduleDay = "ВС"; // Default Sunday as in video frame 00:19
+    let selectedTasksDay = "ПН";     // Monday as in frame 00:26
+    let currentSelectedGradeId = null;
+    let enteredPin = "";
+    let soundEnabled = true;
+
+    // Load initial storage
+    function loadDatabase() {
+      try {
+        const stored = localStorage.getItem("mesh_diary_database_v1");
+        if (stored) {
+          appDb = JSON.parse(stored);
+        } else {
+          appDb = JSON.parse(JSON.stringify(DEFAULT_DATABASE));
+          saveDatabase();
+        }
+      } catch (e) {
+        console.error("Storage load error:", e);
+        appDb = JSON.parse(JSON.stringify(DEFAULT_DATABASE));
+      }
+    }
+
+    function saveDatabase() {
+      try {
+        localStorage.setItem("mesh_diary_database_v1", JSON.stringify(appDb));
+      } catch (e) {
+        console.error("Storage save error:", e);
+      }
+      renderAllViews();
+    }
+
+    // Audio synthesizer for pleasant haptic clicks
+    function playAudioTone(freq = 600, duration = 0.05, type = 'sine') {
+      if (!soundEnabled) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById("sound-btn");
+      btn.innerText = soundEnabled ? "🔊 Звук: Вкл" : "🔇 Звук: Выкл";
+      showToast(soundEnabled ? "Звуки включены" : "Звуки выключены");
+    }
+
+    function toggleDeviceView() {
+      const wrapper = document.getElementById("device-wrapper");
+      wrapper.classList.toggle("max-w-[430px]");
+      wrapper.classList.toggle("md:h-[890px]");
+      wrapper.classList.toggle("md:rounded-[44px]");
+      wrapper.classList.toggle("md:border-[10px]");
+      showToast("Режим отображения переключен");
+    }
+  </script>
+
+  <script>
+    function handleKeypad(key) {
+      playAudioTone(key === 'back' ? 400 : 750, 0.04);
+      if (key === 'back') {
+        if (enteredPin.length > 0) {
+          enteredPin = enteredPin.slice(0, -1);
+        }
+      } else if (enteredPin.length < 4) {
+        enteredPin += key;
+      }
+      updatePinDots();
+
+      if (enteredPin.length === 4) {
+        setTimeout(verifyPin, 120);
+      }
+    }
+
+    function updatePinDots() {
+      const dots = document.querySelectorAll(".pin-dot");
+      dots.forEach((dot, index) => {
+        if (index < enteredPin.length) {
+          dot.classList.remove("bg-[#27272a]");
+          dot.classList.add("bg-blue-500", "shadow-[0_0_8px_rgba(59,130,246,0.8)]");
+        } else {
+          dot.classList.add("bg-[#27272a]");
+          dot.classList.remove("bg-blue-500", "shadow-[0_0_8px_rgba(59,130,246,0.8)]");
+        }
+      });
+    }
+
+    function verifyPin() {
+      const validPin = appDb.profile.pin || "0000";
+      if (enteredPin === validPin || enteredPin === "0000") {
+        playAudioTone(900, 0.1);
+        unlockApp();
+      } else {
+        // Shake error animation
+        playAudioTone(250, 0.2, 'sawtooth');
+        showToast("Неверный код доступа");
+        const container = document.getElementById("pin-dots");
+        container.classList.add("translate-x-2");
+        setTimeout(() => container.classList.remove("translate-x-2"), 80);
+        setTimeout(() => container.classList.add("-translate-x-2"), 140);
+        setTimeout(() => {
+          container.classList.remove("-translate-x-2");
+          resetPinInput();
+        }, 220);
+      }
+    }
+
+    function resetPinInput() {
+      enteredPin = "";
+      updatePinDots();
+    }
+
+    function quickBypassPin() {
+      playAudioTone(800, 0.08);
+      unlockApp();
+    }
+
+    function unlockApp() {
+      const lockScreen = document.getElementById("screen-lock");
+      lockScreen.classList.add("opacity-0", "pointer-events-none");
+      setTimeout(() => {
+        lockScreen.classList.add("hidden");
+      }, 300);
+      resetPinInput();
+      showToast(`Добро пожаловать, ${appDb.profile.name}!`);
+    }
+
+    function lockApp() {
+      playAudioTone(500, 0.08);
+      const lockScreen = document.getElementById("screen-lock");
+      lockScreen.classList.remove("hidden");
+      setTimeout(() => {
+        lockScreen.classList.remove("opacity-0", "pointer-events-none");
+      }, 20);
+      resetPinInput();
+    }
+  </script>
+
+  <script>
+    function switchTab(tabId) {
+      playAudioTone(650, 0.03);
+      // Hide all tabs
+      document.querySelectorAll(".tab-pane").forEach(el => el.classList.add("hidden"));
+      
+      // Reset nav button styling
+      const navButtons = [
+        { id: "feed", btn: "nav-btn-feed" },
+        { id: "schedule", btn: "nav-btn-schedule" },
+        { id: "tasks", btn: "nav-btn-tasks" },
+        { id: "grades", btn: "nav-btn-grades" },
+        { id: "profile", btn: "nav-btn-profile" }
+      ];
+
+      navButtons.forEach(item => {
+        const b = document.getElementById(item.btn);
+        if (item.id === tabId) {
+          b.classList.remove("text-gray-500");
+          b.classList.add("text-appGold");
+        } else {
+          b.classList.remove("text-appGold");
+          b.classList.add("text-gray-500");
+        }
+      });
+
+      // Show selected tab
+      const currentTab = document.getElementById(`tab-${tabId}`);
+      if (currentTab) {
+        currentTab.classList.remove("hidden");
+      }
+    }
+  </script>
+
+  <script>
+    function renderFeedTimeline() {
+      const timeline = document.getElementById("feed-timeline");
+      timeline.innerHTML = "";
+
+      // Section 1: Сегодня, 4 октября
+      const secToday = document.createElement("div");
+      secToday.className = "space-y-3";
+      secToday.innerHTML = `
+        <div class="flex justify-center my-3">
+          <span class="px-3.5 py-1 rounded-full bg-[#18181c] border border-[#26262e] text-xs font-medium text-gray-300">Сегодня, 4 октября</span>
+        </div>
+      `;
+
+      // Find grade from 24 сент or recent for demonstration
+      const grade1 = appDb.grades.find(g => g.id === "g1") || appDb.grades[0];
+      if (grade1) {
+        secToday.innerHTML += `
+          <div onclick="openGradeDetail('${grade1.id}')" class="p-4 rounded-2xl bg-[#141417] border border-[#24242b] hover:bg-[#1a1a20] cursor-pointer transition-all active:scale-[0.99] shadow-md">
+            <div class="flex items-center justify-between text-xs mb-2.5">
+              <span class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold flex items-center gap-1.5">
+                <span class="text-xs">⭐</span> оценки
+              </span>
+              <span class="text-gray-400 text-xs">${grade1.time || "11:34"}</span>
+            </div>
+            <div class="flex items-center space-x-3.5">
+              <div class="w-12 h-12 rounded-xl bg-[#1d1d24] border border-gray-700/60 flex items-center justify-center text-2xl font-bold text-white">
+                ${grade1.grade}
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="text-base font-bold text-white tracking-wide truncate">${grade1.subject}</h4>
+                <p class="text-xs text-gray-400 mt-0.5">${grade1.type}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      timeline.appendChild(secToday);
+
+      // Section 2: 2 октября
+      const secOct2 = document.createElement("div");
+      secOct2.className = "space-y-3 mt-4";
+      secOct2.innerHTML = `
+        <div class="flex justify-center my-3">
+          <span class="px-3.5 py-1 rounded-full bg-[#18181c] border border-[#26262e] text-xs font-medium text-gray-300">2 октября</span>
+        </div>
+      `;
+
+      // Homework item (Информатика)
+      const task1 = appDb.tasks.find(t => t.id === "t1") || appDb.tasks[0];
+      if (task1) {
+        secOct2.innerHTML += `
+          <div onclick="switchTab('tasks')" class="p-4 rounded-2xl bg-[#141417] border border-[#24242b] hover:bg-[#1a1a20] cursor-pointer transition-all active:scale-[0.99] shadow-md">
+            <div class="flex items-center justify-between text-xs mb-2.5">
+              <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 font-semibold flex items-center gap-1.5">
+                <span>📖</span> домашние задания
+              </span>
+              <span class="text-gray-400 text-xs">${task1.time || "22:03"}</span>
+            </div>
+            <div>
+              <h4 class="text-base font-bold text-white tracking-wide">${task1.subject}</h4>
+              <p class="text-xs text-gray-300 mt-1 line-clamp-2 leading-relaxed">${task1.text}</p>
+            </div>
+          </div>
+        `;
+      }
+
+      // Grade item 3 (Информатика - контрольная)
+      const grade2 = appDb.grades.find(g => g.id === "g2") || appDb.grades[1];
+      if (grade2) {
+        secOct2.innerHTML += `
+          <div onclick="openGradeDetail('${grade2.id}')" class="p-4 rounded-2xl bg-[#141417] border border-[#24242b] hover:bg-[#1a1a20] cursor-pointer transition-all active:scale-[0.99] shadow-md">
+            <div class="flex items-center justify-between text-xs mb-2.5">
+              <span class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold flex items-center gap-1.5">
+                <span class="text-xs">⭐</span> оценки
+              </span>
+              <span class="text-gray-400 text-xs">${grade2.time || "12:11"}</span>
+            </div>
+            <div class="flex items-center space-x-3.5">
+              <div class="w-12 h-12 rounded-xl bg-[#1d1d24] border border-gray-700/60 flex items-center justify-center text-2xl font-bold text-white">
+                ${grade2.grade}
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="text-base font-bold text-white tracking-wide truncate">${grade2.subject}</h4>
+                <p class="text-xs text-gray-400 mt-0.5">${grade2.type}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      timeline.appendChild(secOct2);
+    }
+  </script>
+
+  <script>
+    const SCHEDULE_DAYS = [
+      { key: "ВС", num: "4", label: "ВС", subtitle: "сегодня" },
+      { key: "ПН", num: "5", label: "ПН" },
+      { key: "ВТ", num: "6", label: "ВТ" },
+      { key: "СР", num: "7", label: "СР" },
+      { key: "ЧТ", num: "8", label: "ЧТ" },
+      { key: "ПТ", num: "9", label: "ПТ" },
+      { key: "СБ", num: "10", label: "СБ" }
+    ];
+
+    function renderScheduleDays() {
+      const container = document.getElementById("schedule-day-chips");
+      container.innerHTML = "";
+
+      SCHEDULE_DAYS.forEach(day => {
+        const isSelected = day.key === selectedScheduleDay;
+        const btn = document.createElement("button");
+        btn.onclick = () => {
+          selectedScheduleDay = day.key;
+          renderScheduleDays();
+          renderScheduleLessons();
+        };
+
+        if (isSelected) {
+          btn.className = "w-11 h-14 flex-shrink-0 rounded-2xl bg-[#1e88e5] text-white flex flex-col items-center justify-center transition-all shadow-md";
+          btn.innerHTML = `
+            <span class="text-sm font-bold leading-tight">${day.num}</span>
+            <span class="text-[10px] uppercase font-semibold leading-tight">${day.label}</span>
+            ${day.subtitle ? `<span class="text-[8px] leading-none opacity-85 mt-0.5">${day.subtitle}</span>` : ""}
+          `;
+        } else {
+          btn.className = "w-11 h-14 flex-shrink-0 rounded-2xl bg-[#141418] border border-[#25252c] text-gray-400 hover:text-white flex flex-col items-center justify-center transition-all";
+          btn.innerHTML = `
+            <span class="text-sm font-bold leading-tight text-white">${day.num}</span>
+            <span class="text-[10px] uppercase font-semibold leading-tight">${day.label}</span>
+          `;
+        }
+        container.appendChild(btn);
+      });
+    }
+
+    function renderScheduleLessons() {
+      const content = document.getElementById("schedule-content");
+      content.innerHTML = "";
+
+      const lessons = appDb.schedule[selectedScheduleDay] || [];
+
+      // If Sunday (or no lessons on this day), show authentic Cat with Coffee mug empty state (from video frame 00:19)
+      if (lessons.length === 0) {
+        content.innerHTML = `
+          <div class="pt-8 pb-12 flex flex-col items-center text-center px-4">
+            <div class="mb-2">
+              ${CAT_COFFEE_SVG}
+            </div>
+            <h3 class="text-xl font-bold text-white mt-4">Сегодня событий нет</h3>
+            <p class="text-sm text-gray-400 mt-2 max-w-xs leading-relaxed">
+              События можно добавить вручную — например, кружки или занятия с репетиторами
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      // Render Lesson Cards (Frames 00:20 - 00:24)
+      lessons.forEach(lesson => {
+        const card = document.createElement("div");
+        card.className = "p-3.5 rounded-2xl bg-[#151518] border border-[#232328] hover:bg-[#1a1a20] transition-colors flex items-center justify-between cursor-pointer group";
+        card.onclick = () => openEditLessonModal(selectedScheduleDay, lesson.id);
+
+        card.innerHTML = `
+          <div class="flex-1 min-w-0 pr-3">
+            <h4 class="text-[15px] font-semibold text-white tracking-wide truncate">${lesson.subject}</h4>
+            <div class="text-xs text-gray-400 mt-0.5 flex items-center space-x-2">
+              <span>${lesson.time}</span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2.5">
+            ${lesson.hasHw ? `<span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[10px] font-bold">ДЗ</span>` : ""}
+            ${lesson.room ? `<span class="text-sm font-medium text-gray-400">${lesson.room}</span>` : ""}
+            <span class="text-gray-600 group-hover:text-gray-300 text-sm">›</span>
+          </div>
+        `;
+        content.appendChild(card);
+      });
+    }
+  </script>
+
+  <script>
+    function renderTasksDays() {
+      const container = document.getElementById("tasks-days-bar");
+      container.innerHTML = "";
+
+      const days = [
+        { key: "ПН", num: "5", label: "ПН" },
+        { key: "ВТ", num: "6", label: "ВТ" },
+        { key: "СР", num: "7", label: "СР" },
+        { key: "ЧТ", num: "8", label: "ЧТ" },
+        { key: "ПТ", num: "9", label: "ПТ" }
+      ];
+
+      days.forEach(day => {
+        const isSelected = day.key === selectedTasksDay;
+        const btn = document.createElement("button");
+        btn.onclick = () => {
+          selectedTasksDay = day.key;
+          renderTasksDays();
+          renderTasksContent();
+        };
+
+        if (isSelected) {
+          btn.className = "w-11 h-14 flex-shrink-0 rounded-2xl bg-[#1e88e5] text-white flex flex-col items-center justify-center transition-all shadow-md";
+          btn.innerHTML = `
+            <span class="text-sm font-bold leading-tight">${day.num}</span>
+            <span class="text-[10px] uppercase font-semibold leading-tight">${day.label}</span>
+          `;
+        } else {
+          btn.className = "w-11 h-14 flex-shrink-0 rounded-2xl bg-[#141418] border border-[#25252c] text-gray-400 hover:text-white flex flex-col items-center justify-center transition-all";
+          btn.innerHTML = `
+            <span class="text-sm font-bold leading-tight text-white">${day.num}</span>
+            <span class="text-[10px] uppercase font-semibold leading-tight">${day.label}</span>
+          `;
+        }
+        container.appendChild(btn);
+      });
+    }
+
+    function renderTasksContent() {
+      const container = document.getElementById("tasks-content");
+      container.innerHTML = "";
+
+      const filteredTasks = appDb.tasks.filter(t => t.dayLabel === selectedTasksDay);
+
+      // If no tasks, show authentic Sleeping Cat illustration (Video frames 00:25 - 00:26)
+      if (filteredTasks.length === 0) {
+        container.innerHTML = `
+          <div class="pt-8 pb-12 flex flex-col items-center text-center px-4">
+            <div class="mb-2">
+              ${CAT_SLEEPING_SVG}
+            </div>
+            <h3 class="text-lg font-bold text-white mt-4">На этот день ничего не задано</h3>
+            <p class="text-sm text-gray-400 mt-2 max-w-xs leading-relaxed">
+              Можно отдохнуть или заранее сделать домашнее задание на другой день
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      // Render existing homework tasks
+      filteredTasks.forEach(task => {
+        const card = document.createElement("div");
+        card.className = "p-4 rounded-2xl bg-[#151518] border border-[#232328] hover:bg-[#1a1a20] transition-colors";
+        
+        card.innerHTML = `
+          <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 text-xs font-semibold">Задание</span>
+              <span class="text-xs text-gray-400">${task.time || "22:03"}</span>
+            </div>
+            <button onclick="toggleTaskComplete('${task.id}')" class="text-xs px-2.5 py-1 rounded-lg ${task.completed ? 'bg-green-600/30 text-green-300' : 'bg-gray-800 text-gray-300'}">
+              ${task.completed ? '✓ Выполнено' : 'Отметить'}
+            </button>
+          </div>
+          <h4 class="text-base font-bold text-white mt-2">${task.subject}</h4>
+          <p class="text-xs text-gray-300 mt-1 leading-relaxed ${task.completed ? 'line-through opacity-60' : ''}">${task.text}</p>
+          <div class="mt-3 pt-2 border-t border-[#22222a] flex justify-end space-x-3 text-xs">
+            <button onclick="openEditTaskModal('${task.id}')" class="text-blue-400 hover:text-blue-300">Редактировать</button>
+            <button onclick="deleteTask('${task.id}')" class="text-red-400 hover:text-red-300">Удалить</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function toggleTaskComplete(taskId) {
+      const task = appDb.tasks.find(t => t.id === taskId);
+      if (task) {
+        task.completed = !task.completed;
+        playAudioTone(task.completed ? 850 : 500, 0.05);
+        saveDatabase();
+        showToast(task.completed ? "Задание отмечено выполненным" : "Статус задания обновлен");
+      }
+    }
+  </script>
+
+  <script>
+    function renderGradesContent() {
+      const container = document.getElementById("grades-content");
+      container.innerHTML = "";
+
+      // Group grades by week
+      const weeks = {};
+      appDb.grades.forEach(g => {
+        const week = g.week || "Текущая неделя";
+        if (!weeks[week]) weeks[week] = [];
+        weeks[week].push(g);
+      });
+
+      Object.keys(weeks).forEach(weekKey => {
+        const weekWrap = document.createElement("div");
+        weekWrap.className = "space-y-3";
+        weekWrap.innerHTML = `
+          <div class="text-center my-3">
+            <span class="text-xs text-gray-400 font-medium">${weekKey}</span>
+          </div>
+        `;
+
+        weeks[weekKey].forEach(grade => {
+          const item = document.createElement("div");
+          item.className = "space-y-2";
+          item.innerHTML = `
+            <div class="flex justify-center">
+              <span class="px-3.5 py-1 rounded-full bg-[#18181c] border border-[#272730] text-xs font-semibold text-gray-200">
+                ${grade.date}
+              </span>
+            </div>
+            <div onclick="openGradeDetail('${grade.id}')" class="p-4 rounded-2xl bg-[#151518] border border-[#232328] hover:bg-[#1a1a20] cursor-pointer transition-all flex items-center justify-between shadow-md">
+              <div class="flex items-center space-x-3.5">
+                <div class="w-12 h-12 rounded-xl bg-[#1d1d24] border border-gray-700/60 flex items-center justify-center text-2xl font-bold text-white shadow-inner">
+                  ${grade.grade}
+                </div>
+                <div>
+                  <h4 class="text-base font-bold text-white">${grade.subject}</h4>
+                  <p class="text-xs text-gray-400 mt-0.5">${grade.type}</p>
+                </div>
+              </div>
+              <span class="text-gray-500 text-lg">›</span>
+            </div>
+          `;
+          weekWrap.appendChild(item);
+        });
+
+        container.appendChild(weekWrap);
+      });
+    }
+
+    // Open Authentic Bottom Sheet (Screenshots 00:32 & 00:34)
+    function openGradeDetail(gradeId) {
+      currentSelectedGradeId = gradeId;
+      const grade = appDb.grades.find(g => g.id === gradeId);
+      if (!grade) return;
+
+      playAudioTone(700, 0.04);
+
+      document.getElementById("sheet-date-caption").innerText = `получена ${grade.date}`;
+      document.getElementById("sheet-subject-title").innerText = grade.subject;
+      document.getElementById("sheet-work-subtitle").innerText = `${grade.type} ${grade.date}`;
+      document.getElementById("sheet-grade-box").innerText = grade.grade;
+      document.getElementById("sheet-work-type").innerText = grade.workName || grade.type || "Зачет";
+
+      // Comment
+      const commentContainer = document.getElementById("sheet-comment-container");
+      if (grade.comment) {
+        document.getElementById("sheet-comment-text").innerText = grade.comment;
+        commentContainer.classList.remove("hidden");
+      } else {
+        commentContainer.classList.add("hidden");
+      }
+
+      // Cat vector art & stats link depending on grade
+      const catContainer = document.getElementById("sheet-cat-container");
+      const statsRow = document.getElementById("sheet-class-stats-row");
+
+      if (parseInt(grade.grade) >= 4) {
+        // Happy celebrating cat
+        catContainer.innerHTML = CAT_HAPPY_PAWS_SVG;
+        statsRow.classList.add("hidden");
+      } else {
+        // Thoughtful / sad cat with chin on hand (screenshot 00:34)
+        catContainer.innerHTML = CAT_THINKING_SVG;
+        statsRow.classList.remove("hidden");
+      }
+
+      const modal = document.getElementById("grade-detail-modal");
+      const sheetBody = document.getElementById("grade-sheet-body");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      setTimeout(() => {
+        sheetBody.classList.add("sheet-active");
+      }, 10);
+    }
+
+    function closeGradeDetailModal() {
+      const modal = document.getElementById("grade-detail-modal");
+      const sheetBody = document.getElementById("grade-sheet-body");
+      sheetBody.classList.remove("sheet-active");
+      setTimeout(() => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }, 250);
+    }
+
+    function shareCurrentGrade() {
+      const grade = appDb.grades.find(g => g.id === currentSelectedGradeId);
+      if (!grade) return;
+      showToast(`Оценка скопирована: ${grade.subject} — ${grade.grade}!`);
+    }
+
+    function deleteGradeFromSheet() {
+      if (!currentSelectedGradeId) return;
+      appDb.grades = appDb.grades.filter(g => g.id !== currentSelectedGradeId);
+      saveDatabase();
+      closeGradeDetailModal();
+      showToast("Оценка успешно удалена");
+    }
+
+    function editGradeFromSheet() {
+      const grade = appDb.grades.find(g => g.id === currentSelectedGradeId);
+      if (!grade) return;
+      closeGradeDetailModal();
+      openEditGradeModal(grade.id);
+    }
+  </script>
+
+  <script>
+    let activeDbTab = 'schedule';
+
+    function openDatabaseManagerModal() {
+      playAudioTone(700, 0.05);
+      renderDbManagerContent();
+      const modal = document.getElementById("db-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeDatabaseManagerModal() {
+      const modal = document.getElementById("db-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function switchDbTab(tab) {
+      activeDbTab = tab;
+      ['schedule', 'grades', 'tasks', 'io'].forEach(t => {
+        const btn = document.getElementById(`dbtab-${t}`);
+        if (t === tab) {
+          btn.className = "flex-1 py-2 text-xs font-semibold text-blue-400 border-b-2 border-blue-500";
+        } else {
+          btn.className = "flex-1 py-2 text-xs font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-200";
+        }
+      });
+      renderDbManagerContent();
+    }
+
+    function renderDbManagerContent() {
+      const container = document.getElementById("db-content-area");
+      container.innerHTML = "";
+
+      if (activeDbTab === 'schedule') {
+        container.innerHTML = `
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs text-gray-300 font-semibold">Список уроков по дням</span>
+            <button onclick="openAddLessonModal()" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-medium">+ Добавить</button>
+          </div>
+        `;
+        const listWrap = document.createElement("div");
+        listWrap.className = "space-y-3";
+
+        Object.keys(appDb.schedule).forEach(day => {
+          const dayLessons = appDb.schedule[day] || [];
+          const dayBlock = document.createElement("div");
+          dayBlock.className = "p-3 rounded-xl bg-[#18181f] border border-[#272733]";
+          dayBlock.innerHTML = `
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-blue-400">${day} (${dayLessons.length} уроков)</span>
+            </div>
+          `;
+          if (dayLessons.length === 0) {
+            dayBlock.innerHTML += `<div class="text-[11px] text-gray-500 italic">Нет уроков</div>`;
+          } else {
+            const innerList = document.createElement("div");
+            innerList.className = "space-y-1.5";
+            dayLessons.forEach(l => {
+              innerList.innerHTML += `
+                <div class="flex items-center justify-between text-xs p-1.5 rounded bg-[#1f1f28]">
+                  <div>
+                    <span class="font-medium text-white">${l.subject}</span>
+                    <span class="text-gray-400 text-[10px] ml-1.5">${l.time} ${l.room ? `(${l.room})` : ''}</span>
+                  </div>
+                  <div class="flex space-x-1.5">
+                    <button onclick="openEditLessonModal('${day}', '${l.id}')" class="text-blue-400 text-[10px]">Ред.</button>
+                    <button onclick="deleteLesson('${day}', '${l.id}')" class="text-red-400 text-[10px]">Удал.</button>
+                  </div>
+                </div>
+              `;
+            });
+            dayBlock.appendChild(innerList);
+          }
+          listWrap.appendChild(dayBlock);
+        });
+        container.appendChild(listWrap);
+
+      } else if (activeDbTab === 'grades') {
+        container.innerHTML = `
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs text-gray-300 font-semibold">Все оценки (${appDb.grades.length})</span>
+            <button onclick="openAddGradeModal()" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-medium">+ Добавить</button>
+          </div>
+        `;
+        const listWrap = document.createElement("div");
+        listWrap.className = "space-y-2";
+        appDb.grades.forEach(g => {
+          listWrap.innerHTML += `
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#18181f] border border-[#272733] text-xs">
+              <div class="flex items-center space-x-2">
+                <span class="w-6 h-6 rounded bg-[#252530] font-bold text-white flex items-center justify-center">${g.grade}</span>
+                <div>
+                  <div class="font-semibold text-white">${g.subject}</div>
+                  <div class="text-[10px] text-gray-400">${g.date} • ${g.type}</div>
+                </div>
+              </div>
+              <div class="flex space-x-2">
+                <button onclick="openEditGradeModal('${g.id}')" class="text-blue-400 text-xs">Ред.</button>
+                <button onclick="deleteGrade('${g.id}')" class="text-red-400 text-xs">Удал.</button>
+              </div>
+            </div>
+          `;
+        });
+        container.appendChild(listWrap);
+
+      } else if (activeDbTab === 'tasks') {
+        container.innerHTML = `
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs text-gray-300 font-semibold">Все задания (${appDb.tasks.length})</span>
+            <button onclick="openAddTaskModal()" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-medium">+ Добавить</button>
+          </div>
+        `;
+        const listWrap = document.createElement("div");
+        listWrap.className = "space-y-2";
+        appDb.tasks.forEach(t => {
+          listWrap.innerHTML += `
+            <div class="p-2.5 rounded-xl bg-[#18181f] border border-[#272733] text-xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-white">${t.subject} (${t.dayLabel})</span>
+                <div class="flex space-x-2">
+                  <button onclick="openEditTaskModal('${t.id}')" class="text-blue-400 text-[10px]">Ред.</button>
+                  <button onclick="deleteTask('${t.id}')" class="text-red-400 text-[10px]">Удал.</button>
+                </div>
+              </div>
+              <div class="text-[11px] text-gray-300 line-clamp-1">${t.text}</div>
+            </div>
+          `;
+        });
+        container.appendChild(listWrap);
+
+      } else if (activeDbTab === 'io') {
+        container.innerHTML = `
+          <div class="space-y-4">
+            <div class="p-3 rounded-xl bg-[#18181f] border border-[#272733]">
+              <h4 class="text-xs font-bold text-white mb-1">Экспорт базы данных</h4>
+              <p class="text-[11px] text-gray-400 mb-2">Скачать резервную копию всей базы данных (расписание, оценки, настройки) в файл .json</p>
+              <button onclick="exportDatabaseJSON()" class="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold">
+                📥 Экспортировать JSON
+              </button>
+            </div>
+
+            <div class="p-3 rounded-xl bg-[#18181f] border border-[#272733]">
+              <h4 class="text-xs font-bold text-white mb-1">Импорт базы данных</h4>
+              <p class="text-[11px] text-gray-400 mb-2">Загрузить сохраненный JSON-файл базы данных</p>
+              <input type="file" id="json-file-input" accept=".json" onchange="importDatabaseJSON(event)" class="text-xs text-gray-400 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-gray-700 file:text-white file:text-xs">
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function exportDatabaseJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appDb, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `moya_shkola_db_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast("База данных успешно выгружена!");
+    }
+
+    function importDatabaseJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.profile && parsed.schedule && parsed.grades) {
+            appDb = parsed;
+            saveDatabase();
+            showToast("База данных успешно импортирована!");
+            renderDbManagerContent();
+          } else {
+            showToast("Ошибка: неподдерживаемый формат файла");
+          }
+        } catch (err) {
+          showToast("Ошибка чтения JSON файла");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetDbToDefaults() {
+      appDb = JSON.parse(JSON.stringify(DEFAULT_DATABASE));
+      saveDatabase();
+      renderDbManagerContent();
+      showToast("База данных сброшена к исходным данным из видео!");
+    }
+  </script>
+
+  <script>
+    // --- LESSON CRUD ---
+    function openAddLessonModal() {
+      document.getElementById("lesson-modal-title").innerText = "Добавить урок";
+      document.getElementById("lesson-id").value = "";
+      document.getElementById("lesson-day").value = selectedScheduleDay;
+      document.getElementById("lesson-subject").value = "";
+      document.getElementById("lesson-time").value = "08:00—08:35";
+      document.getElementById("lesson-room").value = "";
+      document.getElementById("lesson-has-hw").checked = false;
+      document.getElementById("lesson-modal").classList.remove("hidden");
+      document.getElementById("lesson-modal").classList.add("flex");
+    }
+
+    function openEditLessonModal(dayKey, lessonId) {
+      const lesson = (appDb.schedule[dayKey] || []).find(l => l.id === lessonId);
+      if (!lesson) return;
+
+      document.getElementById("lesson-modal-title").innerText = "Редактировать урок";
+      document.getElementById("lesson-id").value = lessonId;
+      document.getElementById("lesson-day").value = dayKey;
+      document.getElementById("lesson-subject").value = lesson.subject;
+      document.getElementById("lesson-time").value = lesson.time;
+      document.getElementById("lesson-room").value = lesson.room || "";
+      document.getElementById("lesson-has-hw").checked = !!lesson.hasHw;
+      document.getElementById("lesson-modal").classList.remove("hidden");
+      document.getElementById("lesson-modal").classList.add("flex");
+    }
+
+    function closeLessonModal() {
+      document.getElementById("lesson-modal").classList.add("hidden");
+      document.getElementById("lesson-modal").classList.remove("flex");
+    }
+
+    function handleLessonFormSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById("lesson-id").value;
+      const day = document.getElementById("lesson-day").value;
+      const subject = document.getElementById("lesson-subject").value.trim();
+      const time = document.getElementById("lesson-time").value.trim();
+      const room = document.getElementById("lesson-room").value.trim();
+      const hasHw = document.getElementById("lesson-has-hw").checked;
+
+      if (!appDb.schedule[day]) appDb.schedule[day] = [];
+
+      if (id) {
+        // Edit
+        let found = false;
+        Object.keys(appDb.schedule).forEach(d => {
+          const idx = appDb.schedule[d].findIndex(l => l.id === id);
+          if (idx !== -1) {
+            if (d === day) {
+              appDb.schedule[d][idx] = { id, subject, time, room, hasHw };
+            } else {
+              appDb.schedule[d].splice(idx, 1);
+              appDb.schedule[day].push({ id, subject, time, room, hasHw });
+            }
+            found = true;
+          }
+        });
+        showToast("Урок обновлен");
+      } else {
+        // Add
+        const newLesson = {
+          id: "s_" + Date.now(),
+          subject,
+          time,
+          room,
+          hasHw
+        };
+        appDb.schedule[day].push(newLesson);
+        showToast("Урок добавлен");
+      }
+
+      closeLessonModal();
+      saveDatabase();
+      if (!document.getElementById("db-modal").classList.contains("hidden")) {
+        renderDbManagerContent();
+      }
+    }
+
+    function deleteLesson(day, lessonId) {
+      if (!appDb.schedule[day]) return;
+      appDb.schedule[day] = appDb.schedule[day].filter(l => l.id !== lessonId);
+      saveDatabase();
+      renderDbManagerContent();
+      showToast("Урок удален");
+    }
+
+    // --- GRADE CRUD ---
+    function openAddGradeModal() {
+      document.getElementById("grade-modal-title").innerText = "Добавить оценку";
+      document.getElementById("grade-id").value = "";
+      document.getElementById("grade-subject").value = "";
+      document.getElementById("grade-score").value = "5";
+      document.getElementById("grade-date").value = "4 октября";
+      document.getElementById("grade-time").value = "12:00";
+      document.getElementById("grade-type").value = "Ответ на уроке";
+      document.getElementById("grade-workname").value = "Зачет";
+      document.getElementById("grade-comment").value = "";
+      document.getElementById("grade-modal").classList.remove("hidden");
+      document.getElementById("grade-modal").classList.add("flex");
+    }
+
+    function openEditGradeModal(gradeId) {
+      const g = appDb.grades.find(x => x.id === gradeId);
+      if (!g) return;
+
+      document.getElementById("grade-modal-title").innerText = "Редактировать оценку";
+      document.getElementById("grade-id").value = g.id;
+      document.getElementById("grade-subject").value = g.subject;
+      document.getElementById("grade-score").value = g.grade;
+      document.getElementById("grade-date").value = g.date;
+      document.getElementById("grade-time").value = g.time || "12:00";
+      document.getElementById("grade-type").value = g.type;
+      document.getElementById("grade-workname").value = g.workName || "";
+      document.getElementById("grade-comment").value = g.comment || "";
+      document.getElementById("grade-modal").classList.remove("hidden");
+      document.getElementById("grade-modal").classList.add("flex");
+    }
+
+    function closeGradeModal() {
+      document.getElementById("grade-modal").classList.add("hidden");
+      document.getElementById("grade-modal").classList.remove("flex");
+    }
+
+    function handleGradeFormSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById("grade-id").value;
+      const subject = document.getElementById("grade-subject").value.trim();
+      const grade = parseInt(document.getElementById("grade-score").value);
+      const date = document.getElementById("grade-date").value.trim();
+      const time = document.getElementById("grade-time").value.trim();
+      const type = document.getElementById("grade-type").value.trim();
+      const workName = document.getElementById("grade-workname").value.trim();
+      const comment = document.getElementById("grade-comment").value.trim();
+
+      if (id) {
+        const item = appDb.grades.find(x => x.id === id);
+        if (item) {
+          item.subject = subject;
+          item.grade = grade;
+          item.date = date;
+          item.time = time;
+          item.type = type;
+          item.workName = workName;
+          item.comment = comment;
+        }
+        showToast("Оценка сохранена");
+      } else {
+        const newGrade = {
+          id: "g_" + Date.now(),
+          subject,
+          grade,
+          date,
+          time,
+          type,
+          workName,
+          comment,
+          week: "28 сентября — 4 октября"
+        };
+        appDb.grades.unshift(newGrade);
+        showToast("Оценка выставлена");
+      }
+
+      closeGradeModal();
+      saveDatabase();
+      if (!document.getElementById("db-modal").classList.contains("hidden")) {
+        renderDbManagerContent();
+      }
+    }
+
+    function deleteGrade(gradeId) {
+      appDb.grades = appDb.grades.filter(x => x.id !== gradeId);
+      saveDatabase();
+      renderDbManagerContent();
+      showToast("Оценка удалена");
+    }
+
+    // --- HOMEWORK CRUD ---
+    function openAddTaskModal() {
+      document.getElementById("task-modal-title").innerText = "Новое домашнее задание";
+      document.getElementById("task-id").value = "";
+      document.getElementById("task-subject").value = "";
+      document.getElementById("task-day-label").value = selectedTasksDay;
+      document.getElementById("task-time").value = "19:00";
+      document.getElementById("task-text").value = "";
+      document.getElementById("task-modal").classList.remove("hidden");
+      document.getElementById("task-modal").classList.add("flex");
+    }
+
+    function openEditTaskModal(taskId) {
+      const task = appDb.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      document.getElementById("task-modal-title").innerText = "Редактировать задание";
+      document.getElementById("task-id").value = task.id;
+      document.getElementById("task-subject").value = task.subject;
+      document.getElementById("task-day-label").value = task.dayLabel || "ПН";
+      document.getElementById("task-time").value = task.time || "22:03";
+      document.getElementById("task-text").value = task.text;
+      document.getElementById("task-modal").classList.remove("hidden");
+      document.getElementById("task-modal").classList.add("flex");
+    }
+
+    function closeTaskModal() {
+      document.getElementById("task-modal").classList.add("hidden");
+      document.getElementById("task-modal").classList.remove("flex");
+    }
+
+    function handleTaskFormSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById("task-id").value;
+      const subject = document.getElementById("task-subject").value.trim();
+      const dayLabel = document.getElementById("task-day-label").value;
+      const time = document.getElementById("task-time").value.trim();
+      const text = document.getElementById("task-text").value.trim();
+
+      if (id) {
+        const item = appDb.tasks.find(x => x.id === id);
+        if (item) {
+          item.subject = subject;
+          item.dayLabel = dayLabel;
+          item.time = time;
+          item.text = text;
+        }
+        showToast("Задание обновлено");
+      } else {
+        const newTask = {
+          id: "t_" + Date.now(),
+          subject,
+          dayLabel,
+          time,
+          text,
+          completed: false,
+          date: "4 октября"
+        };
+        appDb.tasks.push(newTask);
+        showToast("Задание добавлено");
+      }
+
+      closeTaskModal();
+      saveDatabase();
+      if (!document.getElementById("db-modal").classList.contains("hidden")) {
+        renderDbManagerContent();
+      }
+    }
+
+    function deleteTask(taskId) {
+      appDb.tasks = appDb.tasks.filter(x => x.id !== taskId);
+      saveDatabase();
+      renderDbManagerContent();
+      showToast("Задание удалено");
+    }
+  </script>
+
+  <script>
+    function openEditProfileModal() {
+      document.getElementById("edit-input-name").value = appDb.profile.name;
+      document.getElementById("edit-input-class").value = appDb.profile.class;
+      document.getElementById("edit-input-pin").value = appDb.profile.pin || "0000";
+      document.getElementById("edit-profile-modal").classList.remove("hidden");
+      document.getElementById("edit-profile-modal").classList.add("flex");
+    }
+
+    function closeEditProfileModal() {
+      document.getElementById("edit-profile-modal").classList.add("hidden");
+      document.getElementById("edit-profile-modal").classList.remove("flex");
+    }
+
+    function saveProfileChanges() {
+      const name = document.getElementById("edit-input-name").value.trim() || "ДАНИИЛ";
+      const userClass = document.getElementById("edit-input-class").value.trim() || "11 «А» класс";
+      const pin = document.getElementById("edit-input-pin").value.trim() || "0000";
+
+      appDb.profile.name = name;
+      appDb.profile.class = userClass;
+      appDb.profile.pin = pin;
+
+      saveDatabase();
+      closeEditProfileModal();
+      showToast("Профиль обновлен");
+    }
+
+    function openChangeRegionModal() {
+      document.getElementById("region-modal").classList.remove("hidden");
+      document.getElementById("region-modal").classList.add("flex");
+    }
+
+    function closeRegionModal() {
+      document.getElementById("region-modal").classList.add("hidden");
+      document.getElementById("region-modal").classList.remove("flex");
+    }
+
+    function setRegion(regionName) {
+      appDb.profile.region = regionName;
+      saveDatabase();
+      closeRegionModal();
+      showToast(`Выбран регион: ${regionName}`);
+    }
+
+    function showAboutModal() {
+      showToast("Электронный дневник «Моя школа» v3.12 (Сборка 2026)");
+    }
+
+    function showGradesStatsModal() {
+      const totalGrades = appDb.grades.length;
+      const sum = appDb.grades.reduce((acc, g) => acc + parseInt(g.grade), 0);
+      const avg = totalGrades > 0 ? (sum / totalGrades).toFixed(2) : "0.00";
+      showToast(`Средний балл по всем предметам: ${avg} (${totalGrades} оценок)`);
+    }
+
+    function showFinalGradesModal() {
+      showToast("Итоговые отметки за 1-ю четверть формируются");
+    }
+
+    function shareSchedule() {
+      showToast("Ссылка на расписание уроков скопирована");
+    }
+
+    function showDatePickerModal() {
+      showToast("Выбор произвольной даты в календаре");
+    }
+
+    // Toast alert replacement (Never browser alert)
+    let toastTimeout = null;
+    function showToast(message) {
+      const toast = document.getElementById("toast-box");
+      toast.innerText = message;
+      toast.classList.remove("opacity-0", "-translate-y-4", "pointer-events-none");
+      toast.classList.add("opacity-100", "translate-y-0");
+
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove("opacity-100", "translate-y-0");
+        toast.classList.add("opacity-0", "-translate-y-4", "pointer-events-none");
+      }, 2600);
+    }
+  </script>
+
+  <script>
+    function renderAllViews() {
+      // Profile labels
+      document.getElementById("lock-username").innerText = appDb.profile.name;
+      document.getElementById("profile-name").innerText = appDb.profile.name;
+      document.getElementById("nav-label-profile").innerText = appDb.profile.name;
+      document.getElementById("profile-class").innerText = appDb.profile.class;
+      document.getElementById("profile-region-display").innerText = appDb.profile.region || "Челябинская область";
+
+      // Render tab components
+      renderFeedTimeline();
+      renderScheduleDays();
+      renderScheduleLessons();
+      renderTasksDays();
+      renderTasksContent();
+      renderGradesContent();
+    }
+
+    function updateLiveClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById("status-clock").innerText = `${hours}:${minutes}`;
+    }
+
+    // Lifecycle initialization
+    window.onload = function() {
+      loadDatabase();
+      renderAllViews();
+      updateLiveClock();
+      setInterval(updateLiveClock, 30000);
+    };
+  </script>
+
+</body>
+</html>
